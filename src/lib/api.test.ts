@@ -7,7 +7,7 @@ describe("apiClient", () => {
     vi.restoreAllMocks();
   });
 
-  it("JSON 요청에 request id와 credentials include를 기본으로 포함한다", async () => {
+  it("JSON 요청에 request id와 same-origin credentials를 기본으로 포함한다", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ ok: true }), {
         status: 200,
@@ -34,7 +34,7 @@ describe("apiClient", () => {
       "/auth/login",
       expect.objectContaining({
         method: "POST",
-        credentials: "include",
+        credentials: "same-origin",
         body: JSON.stringify({
           email: "user@example.com",
           password: "password123",
@@ -68,6 +68,22 @@ describe("apiClient", () => {
     await expect(apiClient("/auth/login")).rejects.toMatchObject<ApiError>({
       name: "ApiError",
       problem,
+    });
+  });
+
+  it("네트워크 실패를 ApiError로 변환한다", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+
+    await expect(
+      apiClient("/auth/api/login", {
+        requestId: "req_network",
+      }),
+    ).rejects.toMatchObject<ApiError>({
+      name: "ApiError",
+      problem: expect.objectContaining({
+        code: "NETWORK_ERROR",
+        request_id: "req_network",
+      }),
     });
   });
 });

@@ -14,6 +14,8 @@ describe("logger", () => {
       request_id: "req_test",
       password: "plain-password",
       token: "secret-token",
+      access_token: "access-token",
+      refreshToken: "refresh-token",
       nested: {
         apiKey: "api-key",
       },
@@ -25,6 +27,8 @@ describe("logger", () => {
       request_id: "req_test",
       password: "[REDACTED]",
       token: "[REDACTED]",
+      access_token: "[REDACTED]",
+      refreshToken: "[REDACTED]",
       nested: {
         apiKey: "[REDACTED]",
       },
