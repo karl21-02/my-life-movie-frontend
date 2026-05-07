@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useRef, useCallback } from "react";
 import { api, type ChatMessage, type FileInfo } from "@/lib/api";
+import StepGuideModal from "@/components/StepGuideModal";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf", ".txt", ".mp4", ".mov"];
 
@@ -28,6 +29,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const [navigating, setNavigating] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -110,23 +112,44 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
   }
 
   return (
+    <>
+      <StepGuideModal
+        step={3}
+        onSkip={() => router.push(`/create/${movieId}/feedback`)}
+      />
     <div className="w-full max-w-5xl flex flex-col md:flex-row gap-6">
       {/* 좌측: 파일 업로드 */}
       <aside className="w-full md:w-72 flex flex-col gap-4">
+        {/* 개인정보 동의 체크박스 */}
+        <label className="flex items-start gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={consentChecked}
+            onChange={(e) => setConsentChecked(e.target.checked)}
+            className="mt-0.5 accent-indigo-500"
+          />
+          <span className="text-xs text-gray-600 leading-relaxed">
+            업로드한 파일은 영화 생성 목적으로만 활용됩니다.{" "}
+            <span className="font-semibold text-gray-700">개인정보 활용에 동의합니다.</span>
+          </span>
+        </label>
+
         <div
-          onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+          onDragOver={(e) => { if (!consentChecked) return; e.preventDefault(); setIsDragOver(true); }}
           onDragLeave={() => setIsDragOver(false)}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 py-8 cursor-pointer transition-colors ${
-            isDragOver
-              ? "border-indigo-400 bg-indigo-50"
-              : "border-gray-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/40"
+          onDrop={consentChecked ? handleDrop : undefined}
+          onClick={() => consentChecked && fileInputRef.current?.click()}
+          className={`rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 py-8 transition-colors ${
+            !consentChecked
+              ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+              : isDragOver
+              ? "border-indigo-400 bg-indigo-50 cursor-pointer"
+              : "border-gray-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer"
           }`}
         >
           <span className="text-3xl">{uploading ? "⏳" : "📁"}</span>
           <p className="text-sm font-medium text-gray-600">
-            {uploading ? "업로드 중..." : "파일을 드래그하거나 클릭"}
+            {uploading ? "업로드 중..." : consentChecked ? "파일을 드래그하거나 클릭" : "동의 후 업로드 가능"}
           </p>
           <p className="text-xs text-gray-400">jpg · png · pdf · txt · mp4 · mov</p>
         </div>
@@ -242,5 +265,6 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
         </button>
       </section>
     </div>
+    </>
   );
 }

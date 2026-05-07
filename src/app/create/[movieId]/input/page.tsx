@@ -1,6 +1,5 @@
 import { api } from "@/lib/api";
 import StepIndicator from "@/components/StepIndicator";
-import StepGuideModal from "@/components/StepGuideModal";
 import InputPanel from "./InputPanel";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +16,6 @@ export default async function InputPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-gray-50 flex flex-col items-center px-4 py-10">
-      <StepGuideModal step={3} />
       <StepIndicator current={3} />
       <h1 className="text-2xl font-bold text-gray-800 mt-8 mb-2">당신의 이야기를 들려주세요</h1>
       <p className="text-sm text-gray-500 mb-8">
