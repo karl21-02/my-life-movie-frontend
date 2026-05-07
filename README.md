@@ -71,6 +71,10 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## 📚 Docs
+
+- [개발 컨벤션](docs/CONVENTIONS.md): Git 브랜치 전략, 커밋 컨벤션, PR 규칙, 로그 기준
+
 ---
 
 ## 👥 Team
