@@ -71,6 +71,25 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Docker Compose로 실행
+
+```bash
+# 환경 변수 예시 파일 복사
+cp .env.example .env
+
+# 프론트엔드 개발 서버 실행
+docker compose up --build
+```
+
+기본 주소는 `http://localhost:3000`입니다. 브라우저 API 기본 주소는 `NEXT_PUBLIC_API_BASE_URL`로 관리하며, 기본값은 `http://localhost:8000`입니다. 컨테이너 내부 서버 라우트에서 백엔드로 호출할 때는 `SERVER_API_BASE_URL`을 사용합니다.
+
+로컬 `3000` 포트가 이미 사용 중이면 `.env`에서 `FRONTEND_PORT=3001`처럼 변경해 실행합니다.
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3000 |
+| Backend Proxy Health Check | http://localhost:3000/api/backend-health |
+
 ## 📚 Docs
 
 - [개발 컨벤션](docs/CONVENTIONS.md): Git 브랜치 전략, 커밋 컨벤션, PR 규칙, 로그 기준

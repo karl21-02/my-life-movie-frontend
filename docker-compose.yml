@@ -1,0 +1,28 @@
+name: my-life-movie-frontend
+
+services:
+  my-life-movie-frontend:
+    build:
+      context: .
+      target: dev
+    command:
+      - pnpm
+      - exec
+      - next
+      - dev
+      - --hostname
+      - 0.0.0.0
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+      SERVER_API_BASE_URL: http://host.docker.internal:8000
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - my-life-movie-frontend-node-modules:/app/node_modules
+      - my-life-movie-frontend-next-cache:/app/.next
+
+volumes:
+  my-life-movie-frontend-node-modules:
+  my-life-movie-frontend-next-cache:
