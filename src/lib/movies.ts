@@ -96,3 +96,14 @@ export async function downloadMovie(id: number): Promise<{ message: string }> {
   }
   return apiClient<{ message: string }>(`/movies/${id}/download`);
 }
+
+export async function shareMovie(id: number): Promise<{ share_url: string; message: string }> {
+  if (USE_MOCK) {
+    await new Promise((r) => setTimeout(r, 200));
+    const share_url = `${window.location.origin}/movies/${id}`;
+    return { share_url, message: "공유 링크가 생성되었습니다." };
+  }
+  return apiClient<{ share_url: string; message: string }>(`/movies/${id}/share`, {
+    method: "POST",
+  });
+}

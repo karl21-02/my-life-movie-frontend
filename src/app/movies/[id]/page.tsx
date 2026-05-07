@@ -27,25 +27,32 @@ export default async function MovieDetailPage({ params }: Props) {
   if (!movie) notFound();
 
   return (
-    <div className="min-h-screen bg-zinc-900 px-4 py-10 sm:px-8">
-      <div className="mx-auto max-w-5xl">
-        {/* 뒤로 가기 */}
-        <Link
-          href="/movies"
-          className="mb-8 inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-amber-400"
-        >
-          {"← 내 영화 목록"}
-        </Link>
+    <div className="flex flex-col min-h-full">
+      {/* 상단 타이틀 바 */}
+      <div className="flex items-center justify-between border-b border-zinc-800 px-8 py-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/movies"
+            className="text-sm text-zinc-400 transition-colors hover:text-amber-400"
+          >
+            {"←"}
+          </Link>
+          <h1 className="text-lg font-bold text-zinc-50">{movie.title}</h1>
+        </div>
+        <MovieActions movieId={movie.id} movieTitle={movie.title} />
+      </div>
 
-        {/* 영화 메인 정보 */}
-        <div className="flex flex-col gap-8 sm:flex-row">
+      {/* 메인 콘텐츠 */}
+      <div className="flex-1 px-8 py-8">
+        {/* 포스터 + 정보 */}
+        <div className="flex gap-8">
           {/* 포스터 */}
-          <div className="relative mx-auto aspect-[2/3] w-56 flex-shrink-0 overflow-hidden rounded-2xl shadow-2xl sm:mx-0 sm:w-64">
+          <div className="relative aspect-[2/3] w-48 flex-shrink-0 overflow-hidden rounded-xl shadow-2xl">
             <Image
               src={movie.thumbnail}
               alt={movie.title}
               fill
-              sizes="(max-width: 640px) 224px, 256px"
+              sizes="192px"
               className="object-cover"
               priority
             />
@@ -63,15 +70,10 @@ export default async function MovieDetailPage({ params }: Props) {
               </span>
             </div>
 
-            {/* 제목 */}
-            <h1 className="text-2xl font-bold leading-snug text-zinc-50 sm:text-3xl">
-              {movie.title}
-            </h1>
-
             {/* 줄거리 */}
             <div>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                줄거리
+                {"줄거리"}
               </h2>
               <p className="text-sm leading-7 text-zinc-300">{movie.description}</p>
             </div>
@@ -79,7 +81,7 @@ export default async function MovieDetailPage({ params }: Props) {
             {/* OST */}
             <div>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                OST
+                {"OST"}
               </h2>
               <ul className="flex flex-col gap-2">
                 {movie.ost.map((track, i) => (
@@ -107,19 +109,14 @@ export default async function MovieDetailPage({ params }: Props) {
                 ))}
               </ul>
             </div>
-
-            {/* 액션 버튼 */}
-            <div className="mt-auto pt-2">
-              <MovieActions movieId={movie.id} movieTitle={movie.title} />
-            </div>
           </div>
         </div>
 
-        {/* 유사 영화 추천 */}
+        {/* 비슷한 영화 추천 */}
         {movie.similarMovies.length > 0 && (
-          <div className="mt-14">
-            <h2 className="mb-5 text-xs font-semibold uppercase tracking-widest text-zinc-500">
-              비슷한 영화 추천
+          <div className="mt-10">
+            <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-zinc-500">
+              {"비슷한 영화 추천"}
             </h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {movie.similarMovies.map((similar) => (
@@ -137,7 +134,7 @@ export default async function MovieDetailPage({ params }: Props) {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <p className="line-clamp-2 p-3 text-xs font-medium leading-snug text-zinc-200 group-hover:text-amber-400 transition-colors">
+                  <p className="line-clamp-2 p-3 text-xs font-medium leading-snug text-zinc-200 transition-colors group-hover:text-amber-400">
                     {similar.title}
                   </p>
                 </Link>
