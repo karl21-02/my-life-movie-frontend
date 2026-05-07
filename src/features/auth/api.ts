@@ -3,6 +3,7 @@ import type {
   AuthTokenResponse,
   CurrentUserResponse,
   LoginPayload,
+  LogoutResponse,
   SignupPayload,
 } from "@/features/auth/types";
 
@@ -20,8 +21,23 @@ export function login(payload: LoginPayload) {
   });
 }
 
-export function getCurrentUser() {
+export function refreshAccessToken() {
+  return apiClient<AuthTokenResponse>("/auth/refresh", {
+    method: "POST",
+  });
+}
+
+export function logout() {
+  return apiClient<LogoutResponse>("/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function getCurrentUser(accessToken: string) {
   return apiClient<CurrentUserResponse>("/auth/me", {
     method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
   });
 }

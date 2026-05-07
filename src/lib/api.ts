@@ -87,6 +87,7 @@ export async function apiClient<T>(
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
+    credentials: options.credentials ?? "include",
     body: hasBody ? JSON.stringify(options.body) : undefined,
   });
 
