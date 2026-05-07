@@ -90,6 +90,15 @@ docker compose up --build
 | Frontend | http://localhost:3000 |
 | Backend Proxy Health Check | http://localhost:3000/api/backend-health |
 
+### 인증 화면 뼈대
+
+현재 인증 화면은 백엔드 인증 API 계약을 붙일 수 있는 최소 구조만 제공합니다. 토큰 저장, 세션 유지, 실제 로그인 완료 처리는 후속 구현에서 연결합니다.
+
+| Page | URL |
+|------|-----|
+| 회원가입 | http://localhost:3000/auth/signup |
+| 로그인 | http://localhost:3000/auth/login |
+
 ## 📚 Docs
 
 - [개발 컨벤션](docs/CONVENTIONS.md): Git 브랜치 전략, 커밋 컨벤션, PR 규칙, 로그 기준
