@@ -2,14 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearAuthSession,
-  getAccessToken,
   getAuthSession,
   saveAuthSession,
 } from "@/features/auth/session";
-import type { AuthTokenResponse } from "@/features/auth/types";
+import type { AuthSessionResponse } from "@/features/auth/types";
 
-const authResponse: AuthTokenResponse = {
-  access_token: "access-token",
+const authResponse: AuthSessionResponse = {
   token_type: "bearer",
   expires_in: 900,
   user: {
@@ -30,20 +28,20 @@ describe("auth session", () => {
     window.sessionStorage.clear();
   });
 
-  it("access token을 메모리와 sessionStorage에 저장한다", () => {
+  it("인증 사용자와 만료 시점을 메모리와 sessionStorage에 저장한다", () => {
     vi.setSystemTime(new Date("2026-05-07T00:00:00Z"));
 
     const session = saveAuthSession(authResponse);
 
-    expect(session.accessToken).toBe("access-token");
+    expect(session.user).toEqual(authResponse.user);
     expect(session.expiresAt).toBe(Date.now() + 900_000);
-    expect(getAccessToken()).toBe("access-token");
-    expect(window.sessionStorage.getItem("my_life_movie.access_token")).toBe(
-      "access-token",
+    expect(getAuthSession()?.user).toEqual(authResponse.user);
+    expect(window.sessionStorage.getItem("my_life_movie.auth_user")).toBe(
+      JSON.stringify(authResponse.user),
     );
   });
 
-  it("만료된 access token은 조회 시 정리한다", () => {
+  it("만료된 인증 세션은 조회 시 정리한다", () => {
     vi.setSystemTime(new Date("2026-05-07T00:00:00Z"));
     saveAuthSession({
       ...authResponse,
@@ -51,6 +49,6 @@ describe("auth session", () => {
     });
 
     expect(getAuthSession()).toBeNull();
-    expect(window.sessionStorage.getItem("my_life_movie.access_token")).toBeNull();
+    expect(window.sessionStorage.getItem("my_life_movie.auth_user")).toBeNull();
   });
 });

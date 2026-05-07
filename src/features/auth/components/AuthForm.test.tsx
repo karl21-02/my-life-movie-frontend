@@ -6,7 +6,7 @@ import { ApiError, type ProblemDetails } from "@/lib/api";
 import { AuthForm } from "@/features/auth/components/AuthForm";
 import { login, signup } from "@/features/auth/api";
 import { saveAuthSession } from "@/features/auth/session";
-import type { AuthTokenResponse } from "@/features/auth/types";
+import type { AuthSessionResponse } from "@/features/auth/types";
 
 vi.mock("@/features/auth/api", () => ({
   login: vi.fn(),
@@ -21,8 +21,7 @@ const loginMock = vi.mocked(login);
 const signupMock = vi.mocked(signup);
 const saveAuthSessionMock = vi.mocked(saveAuthSession);
 
-const authResponse: AuthTokenResponse = {
-  access_token: "access-token",
+const authResponse: AuthSessionResponse = {
   token_type: "bearer",
   expires_in: 900,
   user: {
@@ -43,7 +42,7 @@ describe("AuthForm", () => {
     saveAuthSessionMock.mockReset();
   });
 
-  it("로그인 성공 시 access token 세션을 저장한다", async () => {
+  it("로그인 성공 시 인증 세션을 저장한다", async () => {
     loginMock.mockResolvedValue(authResponse);
     const user = userEvent.setup();
     render(<AuthForm mode="login" />);

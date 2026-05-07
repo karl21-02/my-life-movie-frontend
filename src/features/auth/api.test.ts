@@ -27,7 +27,7 @@ describe("auth api", () => {
       display_name: "테스터",
     });
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/signup", {
+    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/signup", {
       method: "POST",
       body: {
         email: "user@example.com",
@@ -43,7 +43,7 @@ describe("auth api", () => {
       password: "password123",
     });
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/login", {
+    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/login", {
       method: "POST",
       body: {
         email: "user@example.com",
@@ -56,22 +56,19 @@ describe("auth api", () => {
     refreshAccessToken();
     logout();
 
-    expect(apiClientMock).toHaveBeenNthCalledWith(1, "/auth/refresh", {
+    expect(apiClientMock).toHaveBeenNthCalledWith(1, "/auth/api/refresh", {
       method: "POST",
     });
-    expect(apiClientMock).toHaveBeenNthCalledWith(2, "/auth/logout", {
+    expect(apiClientMock).toHaveBeenNthCalledWith(2, "/auth/api/logout", {
       method: "POST",
     });
   });
 
-  it("me 요청에 Bearer access token을 포함한다", () => {
-    getCurrentUser("access-token");
+  it("me 요청은 same-origin 인증 API로 호출한다", () => {
+    getCurrentUser();
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/me", {
+    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/me", {
       method: "GET",
-      headers: {
-        Authorization: "Bearer access-token",
-      },
     });
   });
 });

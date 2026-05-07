@@ -17,6 +17,8 @@ export type AuthTokenResponse = {
   user: AuthUser;
 };
 
+export type AuthSessionResponse = Omit<AuthTokenResponse, "access_token">;
+
 export type CurrentUserResponse = {
   user: AuthUser;
 };

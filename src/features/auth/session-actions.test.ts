@@ -13,10 +13,9 @@ import {
 } from "@/features/auth/api";
 import {
   clearAuthSession,
-  getAccessToken,
   saveAuthSession,
 } from "@/features/auth/session";
-import type { AuthTokenResponse, AuthUser } from "@/features/auth/types";
+import type { AuthSessionResponse, AuthUser } from "@/features/auth/types";
 
 vi.mock("@/features/auth/api", () => ({
   getCurrentUser: vi.fn(),
@@ -26,7 +25,6 @@ vi.mock("@/features/auth/api", () => ({
 
 vi.mock("@/features/auth/session", () => ({
   clearAuthSession: vi.fn(),
-  getAccessToken: vi.fn(),
   saveAuthSession: vi.fn(),
 }));
 
@@ -34,7 +32,6 @@ const getCurrentUserMock = vi.mocked(getCurrentUser);
 const logoutMock = vi.mocked(logout);
 const refreshAccessTokenMock = vi.mocked(refreshAccessToken);
 const clearAuthSessionMock = vi.mocked(clearAuthSession);
-const getAccessTokenMock = vi.mocked(getAccessToken);
 const saveAuthSessionMock = vi.mocked(saveAuthSession);
 
 const user: AuthUser = {
@@ -47,8 +44,7 @@ const user: AuthUser = {
   updated_at: "2026-05-07T00:00:00Z",
 };
 
-const authResponse: AuthTokenResponse = {
-  access_token: "new-access-token",
+const authResponse: AuthSessionResponse = {
   token_type: "bearer",
   expires_in: 900,
   user,
@@ -60,7 +56,6 @@ describe("auth session actions", () => {
     logoutMock.mockReset();
     refreshAccessTokenMock.mockReset();
     clearAuthSessionMock.mockReset();
-    getAccessTokenMock.mockReset();
     saveAuthSessionMock.mockReset();
   });
 
@@ -74,30 +69,42 @@ describe("auth session actions", () => {
     expect(result).toEqual(user);
   });
 
-  it("access token이 있으면 me API로 현재 사용자를 조회한다", async () => {
-    getAccessTokenMock.mockReturnValue("access-token");
+  it("me API로 현재 사용자를 조회한다", async () => {
     getCurrentUserMock.mockResolvedValue({ user });
 
     const result = await loadCurrentUser();
 
-    expect(getCurrentUserMock).toHaveBeenCalledWith("access-token");
+    expect(getCurrentUserMock).toHaveBeenCalled();
     expect(refreshAccessTokenMock).not.toHaveBeenCalled();
     expect(result).toEqual(user);
   });
 
-  it("access token이 없으면 refresh API로 세션을 복구한다", async () => {
-    getAccessTokenMock.mockReturnValue(null);
+  it("access cookie가 없으면 refresh API로 세션을 복구한다", async () => {
+    getCurrentUserMock.mockRejectedValue(createAuthError("AUTH_REQUIRED"));
     refreshAccessTokenMock.mockResolvedValue(authResponse);
 
     const result = await loadCurrentUser();
 
+    expect(clearAuthSessionMock).toHaveBeenCalled();
     expect(refreshAccessTokenMock).toHaveBeenCalled();
     expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
     expect(result).toEqual(user);
   });
 
-  it("만료된 access token이면 세션을 비우고 refresh를 재시도한다", async () => {
-    getAccessTokenMock.mockReturnValue("expired-access-token");
+  it("동시에 세션 복구가 들어와도 refresh API는 한 번만 호출한다", async () => {
+    refreshAccessTokenMock.mockResolvedValue(authResponse);
+
+    const [firstUser, secondUser] = await Promise.all([
+      refreshAuthSession(),
+      refreshAuthSession(),
+    ]);
+
+    expect(refreshAccessTokenMock).toHaveBeenCalledTimes(1);
+    expect(firstUser).toEqual(user);
+    expect(secondUser).toEqual(user);
+  });
+
+  it("만료된 access cookie이면 세션을 비우고 refresh를 재시도한다", async () => {
     getCurrentUserMock.mockRejectedValue(createAuthError("INVALID_ACCESS_TOKEN"));
     refreshAccessTokenMock.mockResolvedValue(authResponse);
 

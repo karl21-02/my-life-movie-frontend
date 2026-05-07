@@ -6,7 +6,6 @@ import {
 } from "@/features/auth/api";
 import {
   clearAuthSession,
-  getAccessToken,
   saveAuthSession,
 } from "@/features/auth/session";
 import type { AuthUser } from "@/features/auth/types";
@@ -16,20 +15,24 @@ const REFRESHABLE_AUTH_ERROR_CODES = new Set([
   "INVALID_ACCESS_TOKEN",
 ]);
 
+let refreshSessionPromise: Promise<AuthUser> | null = null;
+
 export async function refreshAuthSession(): Promise<AuthUser> {
-  const response = await refreshAccessToken();
-  saveAuthSession(response);
-  return response.user;
+  refreshSessionPromise ??= refreshAccessToken()
+    .then((response) => {
+      saveAuthSession(response);
+      return response.user;
+    })
+    .finally(() => {
+      refreshSessionPromise = null;
+    });
+
+  return refreshSessionPromise;
 }
 
 export async function loadCurrentUser(): Promise<AuthUser> {
-  const accessToken = getAccessToken();
-  if (!accessToken) {
-    return refreshAuthSession();
-  }
-
   try {
-    const response = await getCurrentUser(accessToken);
+    const response = await getCurrentUser();
     return response.user;
   } catch (error) {
     if (isRefreshableAuthError(error)) {
