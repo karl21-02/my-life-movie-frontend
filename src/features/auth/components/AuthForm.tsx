@@ -5,7 +5,9 @@ import { FormEvent, useMemo, useState } from "react";
 
 import { ApiError } from "@/lib/api";
 import { login, signup } from "@/features/auth/api";
+import { saveAuthSession } from "@/features/auth/session";
 import type { AuthMode } from "@/features/auth/types";
+import { logger } from "@/lib/logger";
 
 type AuthFormProps = {
   mode: AuthMode;
@@ -17,20 +19,22 @@ const content = {
   login: {
     eyebrow: "WELCOME BACK",
     title: "다시 나의 영화로 들어가기",
-    description: "이메일과 비밀번호 기반 로그인 흐름을 연결할 자리입니다.",
+    description: "계정으로 돌아와 흩어진 기록을 영화처럼 이어갈 수 있습니다.",
     submitLabel: "로그인",
     switchLabel: "아직 계정이 없다면",
     switchHref: "/auth/signup",
     switchText: "회원가입",
+    successMessage: "로그인되었습니다. 이제 나의 영화 만들기를 이어갈 수 있습니다.",
   },
   signup: {
     eyebrow: "START YOUR FILM",
     title: "나만의 영화 계정 만들기",
-    description: "회원가입 API 계약과 화면 상태를 먼저 맞춰둔 뼈대입니다.",
+    description: "이메일과 비밀번호로 계정을 만들고 나의 기록을 담을 준비를 합니다.",
     submitLabel: "회원가입",
     switchLabel: "이미 계정이 있다면",
     switchHref: "/auth/login",
     switchText: "로그인",
+    successMessage: "가입이 완료되었습니다. 첫 장면을 만들 준비가 끝났습니다.",
   },
 } satisfies Record<AuthMode, Record<string, string>>;
 
@@ -38,7 +42,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const copy = content[mode];
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState<string>(
-    "백엔드 인증 로직은 다음 단계에서 연결됩니다.",
+    "이메일과 비밀번호를 입력해 인증을 진행합니다.",
   );
 
   const isSignup = mode === "signup";
@@ -59,18 +63,21 @@ export function AuthForm({ mode }: AuthFormProps) {
     const displayName = String(formData.get("display_name") ?? "").trim();
 
     try {
-      if (isSignup) {
-        await signup({
+      const response = isSignup
+        ? await signup({
           email,
           password,
           display_name: displayName || undefined,
-        });
-      } else {
-        await login({ email, password });
-      }
+        })
+        : await login({ email, password });
 
+      saveAuthSession(response);
+      logger.info("auth_session_created", {
+        mode,
+        user_id: response.user.id,
+      });
       setStatus("ready");
-      setMessage("인증 응답을 받았습니다. 토큰 저장은 후속 구현에서 연결합니다.");
+      setMessage(copy.successMessage);
     } catch (error) {
       setStatus("error");
       if (error instanceof ApiError) {
@@ -169,8 +176,11 @@ export function AuthForm({ mode }: AuthFormProps) {
               className={`mt-4 min-h-12 rounded-md border px-4 py-3 text-sm leading-6 ${
                 status === "error"
                   ? "border-[#f1a06a]/35 bg-[#3a1e18]/60 text-[#ffd6bf]"
+                  : status === "ready"
+                    ? "border-[#78d6a3]/35 bg-[#173024]/60 text-[#c9f5d9]"
                   : "border-[#fff8ed]/14 bg-[#120f0f]/45 text-[#f6e7cf]/74"
               }`}
+              role={status === "error" ? "alert" : "status"}
             >
               {helperText}
             </p>

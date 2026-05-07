@@ -1,0 +1,107 @@
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { ApiError, type ProblemDetails } from "@/lib/api";
+import { AuthForm } from "@/features/auth/components/AuthForm";
+import { login, signup } from "@/features/auth/api";
+import { saveAuthSession } from "@/features/auth/session";
+import type { AuthTokenResponse } from "@/features/auth/types";
+
+vi.mock("@/features/auth/api", () => ({
+  login: vi.fn(),
+  signup: vi.fn(),
+}));
+
+vi.mock("@/features/auth/session", () => ({
+  saveAuthSession: vi.fn(),
+}));
+
+const loginMock = vi.mocked(login);
+const signupMock = vi.mocked(signup);
+const saveAuthSessionMock = vi.mocked(saveAuthSession);
+
+const authResponse: AuthTokenResponse = {
+  access_token: "access-token",
+  token_type: "bearer",
+  expires_in: 900,
+  user: {
+    id: 1,
+    email: "user@example.com",
+    display_name: "테스터",
+    role: "USER",
+    status: "ACTIVE",
+    created_at: "2026-05-07T00:00:00Z",
+    updated_at: "2026-05-07T00:00:00Z",
+  },
+};
+
+describe("AuthForm", () => {
+  beforeEach(() => {
+    loginMock.mockReset();
+    signupMock.mockReset();
+    saveAuthSessionMock.mockReset();
+  });
+
+  it("로그인 성공 시 access token 세션을 저장한다", async () => {
+    loginMock.mockResolvedValue(authResponse);
+    const user = userEvent.setup();
+    render(<AuthForm mode="login" />);
+
+    await user.type(screen.getByLabelText("이메일"), "user@example.com");
+    await user.type(screen.getByLabelText("비밀번호"), "password123");
+    await user.click(screen.getByRole("button", { name: "로그인" }));
+
+    expect(loginMock).toHaveBeenCalledWith({
+      email: "user@example.com",
+      password: "password123",
+    });
+    expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
+    expect(
+      await screen.findByText("로그인되었습니다. 이제 나의 영화 만들기를 이어갈 수 있습니다."),
+    ).toBeInTheDocument();
+  });
+
+  it("회원가입 성공 시 display name을 포함해 요청한다", async () => {
+    signupMock.mockResolvedValue(authResponse);
+    const user = userEvent.setup();
+    render(<AuthForm mode="signup" />);
+
+    await user.type(screen.getByLabelText("이름"), "테스터");
+    await user.type(screen.getByLabelText("이메일"), "user@example.com");
+    await user.type(screen.getByLabelText("비밀번호"), "password123");
+    await user.click(screen.getByRole("button", { name: "회원가입" }));
+
+    expect(signupMock).toHaveBeenCalledWith({
+      email: "user@example.com",
+      password: "password123",
+      display_name: "테스터",
+    });
+    expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
+  });
+
+  it("Problem Details 에러 메시지를 사용자에게 보여준다", async () => {
+    const problem: ProblemDetails = {
+      type: "invalid_credentials",
+      title: "Invalid Credentials",
+      status: 401,
+      detail: "이메일 또는 비밀번호가 올바르지 않습니다.",
+      instance: "/auth/login",
+      code: "INVALID_CREDENTIALS",
+      request_id: "req_error",
+      errors: [],
+    };
+    loginMock.mockRejectedValue(new ApiError(problem));
+    const user = userEvent.setup();
+    render(<AuthForm mode="login" />);
+
+    await user.type(screen.getByLabelText("이메일"), "user@example.com");
+    await user.type(screen.getByLabelText("비밀번호"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "로그인" }));
+
+    expect(
+      await screen.findByRole("alert"),
+    ).toHaveTextContent("이메일 또는 비밀번호가 올바르지 않습니다.");
+    expect(saveAuthSessionMock).not.toHaveBeenCalled();
+  });
+});
