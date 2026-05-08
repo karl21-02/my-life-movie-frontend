@@ -80,16 +80,16 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
   return (
     <div className="w-full max-w-5xl flex flex-col md:flex-row gap-6">
       {/* 음악 목록 */}
-      <section className="flex-1 bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-3">
-        <h2 className="font-semibold text-gray-700 mb-2">테마 음악 목록</h2>
+      <section className="flex-1 bg-zinc-900 rounded-2xl p-6 flex flex-col gap-3">
+        <h2 className="font-semibold text-zinc-200 mb-2">테마 음악 목록</h2>
         <ul className="flex flex-col gap-2">
           {tracks.map((track) => (
             <li
               key={track.music_id}
               className={`flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-colors border-2 ${
                 selectedId === track.music_id
-                  ? "border-indigo-400 bg-indigo-50"
-                  : "border-transparent bg-gray-50 hover:bg-gray-100"
+                  ? "border-[#e3b65a] bg-[#e3b65a]/10"
+                  : "border-transparent bg-zinc-800 hover:bg-zinc-700"
               }`}
               onClick={() => setSelectedId(track.music_id)}
             >
@@ -100,17 +100,17 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
                     e.stopPropagation();
                     handlePlay(track);
                   }}
-                  className="shrink-0 w-8 h-8 rounded-full bg-indigo-100 hover:bg-indigo-200 flex items-center justify-center text-indigo-600 transition-colors"
+                  className="shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 hover:bg-[#e3b65a]/30 flex items-center justify-center text-[#e3b65a] transition-colors"
                 >
                   {playingId === track.music_id ? "⏸" : "▶"}
                 </button>
-                <span className="text-sm font-medium text-gray-800 truncate">{track.title}</span>
+                <span className="text-sm font-medium text-zinc-100 truncate">{track.title}</span>
                 {track.is_ai_recommended && (
-                  <span className="shrink-0 text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">AI 추천</span>
+                  <span className="shrink-0 text-xs bg-[#e3b65a]/20 text-[#e3b65a] px-2 py-0.5 rounded-full">AI 추천</span>
                 )}
               </div>
               {selectedId === track.music_id && (
-                <span className="shrink-0 text-indigo-500 text-sm font-medium">선택됨</span>
+                <span className="shrink-0 text-[#e3b65a] text-sm font-medium">선택됨</span>
               )}
             </li>
           ))}
@@ -118,30 +118,30 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
         <button
           onClick={handleConfirm}
           disabled={saving || selectedId === null}
-          className="mt-4 w-full py-3 rounded-xl bg-indigo-500 text-white font-semibold hover:bg-indigo-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="mt-4 w-full py-3 rounded-xl bg-[#e3b65a] text-zinc-900 font-semibold hover:bg-[#e3b65a]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? "저장 중..." : "다음 단계로"}
         </button>
       </section>
 
       {/* AI 채팅 */}
-      <section className="w-full md:w-80 bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-3">
-        <h2 className="font-semibold text-gray-700 mb-2">AI 음악 추천</h2>
+      <section className="w-full md:w-80 bg-zinc-900 rounded-2xl p-6 flex flex-col gap-3">
+        <h2 className="font-semibold text-zinc-200 mb-2">AI 음악 추천</h2>
         <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-72">
           {chatMessages.map((msg, i) => (
             <div
               key={i}
               className={`text-sm px-3 py-2 rounded-xl max-w-[90%] ${
                 msg.role === "ai"
-                  ? "bg-gray-100 text-gray-700 self-start"
-                  : "bg-indigo-500 text-white self-end"
+                  ? "bg-zinc-800 text-zinc-200 self-start"
+                  : "bg-[#e3b65a] text-zinc-900 self-end"
               }`}
             >
               {msg.text}
             </div>
           ))}
           {chatLoading && (
-            <div className="text-sm px-3 py-2 rounded-xl bg-gray-100 text-gray-400 self-start animate-pulse">
+            <div className="text-sm px-3 py-2 rounded-xl bg-zinc-800 text-zinc-500 self-start animate-pulse">
               추천 중...
             </div>
           )}
@@ -153,12 +153,12 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleChatSend()}
             placeholder="원하는 분위기를 입력하세요"
-            className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-300"
+            className="flex-1 text-sm border border-zinc-700 bg-zinc-800 text-zinc-200 placeholder-zinc-500 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-[#e3b65a]/40"
           />
           <button
             onClick={handleChatSend}
             disabled={chatLoading || !chatInput.trim()}
-            className="shrink-0 px-3 py-2 bg-indigo-500 text-white rounded-xl text-sm hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+            className="shrink-0 px-3 py-2 bg-[#e3b65a] text-zinc-900 rounded-xl text-sm hover:bg-[#e3b65a]/90 disabled:opacity-50 transition-colors"
           >
             전송
           </button>

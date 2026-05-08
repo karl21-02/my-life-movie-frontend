@@ -34,10 +34,10 @@ export default function ThemeGrid({ themes }: { themes: Theme[] }) {
               <span className="text-white font-medium text-sm">선택 중...</span>
             </div>
           )}
-          <span className="text-lg font-bold text-gray-800 drop-shadow-sm">
+          <span className="text-lg font-bold text-white drop-shadow-sm">
             {theme.name}
           </span>
-          <span className="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+          <span className="text-xs text-zinc-300 mt-1 line-clamp-2 leading-relaxed">
             {theme.description}
           </span>
         </button>

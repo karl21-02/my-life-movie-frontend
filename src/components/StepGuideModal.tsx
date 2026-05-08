@@ -39,11 +39,11 @@ export default function StepGuideModal({ step, onSkip }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6 flex flex-col gap-4">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-xl max-w-sm w-full mx-4 p-6 flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-violet-500">Step {step} / 4</span>
-          <h2 className="text-lg font-bold text-gray-800">{title}</h2>
-          <p className="text-sm text-gray-500 whitespace-pre-line leading-relaxed">
+          <span className="text-xs font-semibold text-[#e3b65a]">Step {step} / 4</span>
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <p className="text-sm text-zinc-400 whitespace-pre-line leading-relaxed">
             {description}
           </p>
         </div>
@@ -54,14 +54,14 @@ export default function StepGuideModal({ step, onSkip }: Props) {
                 setVisible(false);
                 onSkip();
               }}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-sm text-zinc-400 hover:bg-zinc-800 transition-colors"
             >
               건너뛰기
             </button>
           )}
           <button
             onClick={() => setVisible(false)}
-            className="flex-1 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-600 transition-colors"
+            className="flex-1 py-2.5 rounded-xl bg-[#e3b65a] text-zinc-900 text-sm font-semibold hover:bg-[#e3b65a]/90 transition-colors"
           >
             시작하기
           </button>

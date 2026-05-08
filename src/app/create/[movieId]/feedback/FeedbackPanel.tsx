@@ -15,18 +15,18 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
 
 function FileList({ files, emptyText }: { files: FileInfo[]; emptyText: string }) {
   if (files.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-8">{emptyText}</p>;
+    return <p className="text-sm text-zinc-500 text-center py-8">{emptyText}</p>;
   }
   return (
     <ul className="flex flex-col gap-2">
       {files.map((f) => (
         <li
           key={f.file_id}
-          className="bg-gray-50 rounded-xl px-4 py-3 flex flex-col gap-1"
+          className="bg-zinc-800 rounded-xl px-4 py-3 flex flex-col gap-1"
         >
-          <span className="text-sm font-medium text-gray-700">{f.filename}</span>
+          <span className="text-sm font-medium text-zinc-200">{f.filename}</span>
           {f.extracted_text && (
-            <span className="text-xs text-gray-400 line-clamp-2">{f.extracted_text}</span>
+            <span className="text-xs text-zinc-500 line-clamp-2">{f.extracted_text}</span>
           )}
         </li>
       ))}
@@ -61,11 +61,11 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
     switch (activeTab) {
       case "prompt":
         return summary.prompt ? (
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+          <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
             {summary.prompt}
           </p>
         ) : (
-          <p className="text-sm text-gray-400 text-center py-8">
+          <p className="text-sm text-zinc-500 text-center py-8">
             입력된 시나리오 내용이 없습니다.
           </p>
         );
@@ -91,30 +91,30 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
     <div className="w-full max-w-3xl flex flex-col gap-6">
       {/* 메타 정보 */}
       <div className="flex gap-3">
-        <div className="flex-1 bg-white rounded-2xl shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-xs text-gray-400 font-medium">테마</span>
-          <span className="text-sm font-semibold text-gray-700">
+        <div className="flex-1 bg-zinc-900 rounded-2xl px-5 py-4 flex flex-col gap-1">
+          <span className="text-xs text-zinc-500 font-medium">테마</span>
+          <span className="text-sm font-semibold text-zinc-200">
             테마 #{summary.theme.theme_id}
           </span>
         </div>
-        <div className="flex-1 bg-white rounded-2xl shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-xs text-gray-400 font-medium">음악</span>
-          <span className="text-sm font-semibold text-gray-700">
+        <div className="flex-1 bg-zinc-900 rounded-2xl px-5 py-4 flex flex-col gap-1">
+          <span className="text-xs text-zinc-500 font-medium">음악</span>
+          <span className="text-sm font-semibold text-zinc-200">
             {summary.music ? `트랙 #${summary.music.music_id}` : "선택 없음"}
           </span>
         </div>
-        <div className="flex-1 bg-white rounded-2xl shadow-sm px-5 py-4 flex flex-col gap-1">
-          <span className="text-xs text-gray-400 font-medium">첨부 파일</span>
-          <span className="text-sm font-semibold text-gray-700">
+        <div className="flex-1 bg-zinc-900 rounded-2xl px-5 py-4 flex flex-col gap-1">
+          <span className="text-xs text-zinc-500 font-medium">첨부 파일</span>
+          <span className="text-sm font-semibold text-zinc-200">
             {summary.files.length}개
           </span>
         </div>
       </div>
 
       {/* 세로 탭 + 콘텐츠 */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden flex min-h-72">
+      <div className="bg-zinc-900 rounded-2xl overflow-hidden flex min-h-72">
         {/* 좌측 세로 탭 */}
-        <div className="flex flex-col border-r border-gray-100 w-36 shrink-0">
+        <div className="flex flex-col border-r border-zinc-800 w-36 shrink-0">
           {TABS.map((tab) => {
             const count = tabCount(tab.key);
             return (
@@ -123,14 +123,14 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-2 px-4 py-4 text-sm font-medium transition-colors border-l-2 text-left ${
                   activeTab === tab.key
-                    ? "border-violet-500 text-violet-600 bg-violet-50/50"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    ? "border-[#e3b65a] text-[#e3b65a] bg-[#e3b65a]/5"
+                    : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
                 }`}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
                 {count !== null && (
-                  <span className="text-xs bg-violet-100 text-violet-600 rounded-full px-1.5 ml-auto">
+                  <span className="text-xs bg-[#e3b65a]/20 text-[#e3b65a] rounded-full px-1.5 ml-auto">
                     {count}
                   </span>
                 )}
@@ -143,7 +143,7 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="w-full py-3 rounded-xl bg-violet-500 text-white text-sm font-bold hover:bg-violet-600 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="w-full py-3 rounded-xl bg-[#e3b65a] text-zinc-900 text-sm font-bold hover:bg-[#e3b65a]/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {generating ? "생성 중..." : "🎬 생성"}
             </button>

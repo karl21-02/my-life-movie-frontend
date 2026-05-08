@@ -126,11 +126,11 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
             type="checkbox"
             checked={consentChecked}
             onChange={(e) => setConsentChecked(e.target.checked)}
-            className="mt-0.5 accent-indigo-500"
+            className="mt-0.5 accent-[#e3b65a]"
           />
-          <span className="text-xs text-gray-600 leading-relaxed">
+          <span className="text-xs text-zinc-400 leading-relaxed">
             업로드한 파일은 영화 생성 목적으로만 활용됩니다.{" "}
-            <span className="font-semibold text-gray-700">개인정보 활용에 동의합니다.</span>
+            <span className="font-semibold text-zinc-200">개인정보 활용에 동의합니다.</span>
           </span>
         </label>
 
@@ -141,17 +141,17 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
           onClick={() => consentChecked && fileInputRef.current?.click()}
           className={`rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2 py-8 transition-colors ${
             !consentChecked
-              ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+              ? "border-zinc-700 bg-zinc-900 cursor-not-allowed opacity-50"
               : isDragOver
-              ? "border-indigo-400 bg-indigo-50 cursor-pointer"
-              : "border-gray-300 bg-white hover:border-indigo-300 hover:bg-indigo-50/40 cursor-pointer"
+              ? "border-[#e3b65a] bg-[#e3b65a]/10 cursor-pointer"
+              : "border-zinc-600 bg-zinc-800 hover:border-[#e3b65a]/50 hover:bg-[#e3b65a]/5 cursor-pointer"
           }`}
         >
           <span className="text-3xl">{uploading ? "⏳" : "📁"}</span>
-          <p className="text-sm font-medium text-gray-600">
+          <p className="text-sm font-medium text-zinc-300">
             {uploading ? "업로드 중..." : consentChecked ? "파일을 드래그하거나 클릭" : "동의 후 업로드 가능"}
           </p>
-          <p className="text-xs text-gray-400">jpg · png · pdf · txt · mp4 · mov</p>
+          <p className="text-xs text-zinc-500">jpg · png · pdf · txt · mp4 · mov</p>
         </div>
         <input
           ref={fileInputRef}
@@ -167,7 +167,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
             {uploadedFiles.map((f) => (
               <li
                 key={f.file_id}
-                className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 shadow-sm text-sm text-gray-700"
+                className="flex items-center gap-2 bg-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-200"
               >
                 <span>{fileIcon(f.type)}</span>
                 <span className="truncate">{f.filename}</span>
@@ -178,18 +178,18 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
 
         {/* 시나리오 초안 미리보기 */}
         {currentDraft && (
-          <div className="bg-violet-50 rounded-2xl p-4 border border-violet-200">
-            <p className="text-xs font-semibold text-violet-600 mb-1">시나리오 초안</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{currentDraft}</p>
+          <div className="bg-[#e3b65a]/10 rounded-2xl p-4 border border-[#e3b65a]/30">
+            <p className="text-xs font-semibold text-[#e3b65a] mb-1">시나리오 초안</p>
+            <p className="text-sm text-zinc-200 leading-relaxed">{currentDraft}</p>
           </div>
         )}
       </aside>
 
       {/* 우측: AI 채팅 */}
-      <section className="flex-1 bg-white rounded-2xl shadow-sm p-6 flex flex-col gap-4 min-h-[480px]">
+      <section className="flex-1 bg-zinc-900 rounded-2xl p-6 flex flex-col gap-4 min-h-120">
         <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
           {messages.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400 gap-2">
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-zinc-500 gap-2">
               <span className="text-4xl">🎬</span>
               <p className="text-sm">AI에게 당신의 이야기를 들려주세요.</p>
               <p className="text-xs">어떤 시절, 어떤 감정을 담고 싶은지 자유롭게 적어보세요.</p>
@@ -203,8 +203,8 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
               <div
                 className={`text-sm px-4 py-3 rounded-2xl max-w-[80%] leading-relaxed ${
                   msg.role === "user"
-                    ? "bg-indigo-500 text-white rounded-br-sm"
-                    : "bg-gray-100 text-gray-700 rounded-bl-sm"
+                    ? "bg-[#e3b65a] text-zinc-900 rounded-br-sm"
+                    : "bg-zinc-800 text-zinc-200 rounded-bl-sm"
                 }`}
               >
                 {msg.message}
@@ -213,7 +213,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
           ))}
           {chatLoading && (
             <div className="flex justify-start">
-              <div className="text-sm px-4 py-3 rounded-2xl bg-gray-100 text-gray-400 animate-pulse rounded-bl-sm">
+              <div className="text-sm px-4 py-3 rounded-2xl bg-zinc-800 text-zinc-500 animate-pulse rounded-bl-sm">
                 AI가 생각 중...
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
               key={action}
               type="button"
               onClick={() => setInput(action)}
-              className="text-xs px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
+              className="text-xs px-3 py-1.5 rounded-full border border-[#e3b65a]/30 bg-[#e3b65a]/10 text-[#e3b65a] hover:bg-[#e3b65a]/20 transition-colors"
             >
               {action}
             </button>
@@ -244,12 +244,12 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
             placeholder="이야기를 입력하세요..."
             disabled={chatLoading}
-            className="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-300 disabled:bg-gray-50"
+            className="flex-1 text-sm border border-zinc-700 bg-zinc-800 text-zinc-200 placeholder-zinc-500 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#e3b65a]/40 disabled:bg-zinc-900"
           />
           <button
             onClick={handleSend}
             disabled={chatLoading || !input.trim()}
-            className="shrink-0 px-4 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+            className="shrink-0 px-4 py-2.5 bg-[#e3b65a] text-zinc-900 rounded-xl text-sm font-medium hover:bg-[#e3b65a]/90 disabled:opacity-50 transition-colors"
           >
             전송
           </button>
@@ -259,7 +259,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
         <button
           onClick={handleNext}
           disabled={navigating}
-          className="w-full py-3 rounded-xl bg-violet-500 text-white font-semibold hover:bg-violet-600 transition-colors disabled:opacity-50"
+          className="w-full py-3 rounded-xl bg-[#e3b65a] text-zinc-900 font-semibold hover:bg-[#e3b65a]/90 transition-colors disabled:opacity-50"
         >
           {navigating ? "이동 중..." : "다음 단계로 →"}
         </button>

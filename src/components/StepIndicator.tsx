@@ -14,17 +14,17 @@ export default function StepIndicator({ current }: { current: 1 | 2 | 3 | 4 }) {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   isActive
-                    ? "bg-violet-500 text-white"
+                    ? "bg-[#e3b65a] text-zinc-900"
                     : isDone
-                    ? "bg-violet-200 text-violet-700"
-                    : "bg-gray-200 text-gray-400"
+                    ? "bg-[#e3b65a]/30 text-[#e3b65a]"
+                    : "bg-zinc-700 text-zinc-500"
                 }`}
               >
                 {isDone ? "✓" : step}
               </div>
               <span
                 className={`text-xs mt-1 ${
-                  isActive ? "text-violet-600 font-semibold" : "text-gray-400"
+                  isActive ? "text-[#e3b65a] font-semibold" : "text-zinc-500"
                 }`}
               >
                 {label}
@@ -32,7 +32,7 @@ export default function StepIndicator({ current }: { current: 1 | 2 | 3 | 4 }) {
             </div>
             {step < STEPS.length && (
               <div
-                className={`w-12 h-0.5 mb-4 ${isDone ? "bg-violet-300" : "bg-gray-200"}`}
+                className={`w-12 h-0.5 mb-4 ${isDone ? "bg-[#e3b65a]/50" : "bg-zinc-700"}`}
               />
             )}
           </div>
