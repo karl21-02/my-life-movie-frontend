@@ -73,6 +73,9 @@ export async function apiClient<T>(
   const headers = new Headers(options.headers);
   headers.set(REQUEST_ID_HEADER, requestId);
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+
   const hasBody = options.body !== undefined;
   if (hasBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -206,11 +209,15 @@ export const api = {
       const requestId = `req_${Date.now().toString(36)}`;
       const form = new FormData();
       form.append("file", file);
+      const uploadToken = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
       const response = await fetch(
         `${API_BASE_URL}/api/v1/movies/${movieId}/files`,
         {
           method: "POST",
-          headers: { [REQUEST_ID_HEADER]: requestId },
+          headers: {
+            [REQUEST_ID_HEADER]: requestId,
+            ...(uploadToken ? { Authorization: `Bearer ${uploadToken}` } : {}),
+          },
           body: form,
         },
       );

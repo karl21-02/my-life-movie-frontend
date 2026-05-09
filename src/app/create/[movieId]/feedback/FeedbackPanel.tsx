@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api, type SummaryResponse, type FileInfo } from "@/lib/api";
 
 type Tab = "prompt" | "image" | "video" | "document";
@@ -36,15 +36,19 @@ function FileList({ files, emptyText }: { files: FileInfo[]; emptyText: string }
 
 interface Props {
   movieId: number;
-  summary: SummaryResponse;
 }
 
-export default function FeedbackPanel({ movieId, summary }: Props) {
+export default function FeedbackPanel({ movieId }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("prompt");
   const [generating, setGenerating] = useState(false);
+  const [summary, setSummary] = useState<SummaryResponse | null>(null);
 
-  const filesByType = (type: string) => summary.files.filter((f) => f.type === type);
+  useEffect(() => {
+    api.movies.getSummary(movieId).then(setSummary).catch(() => {});
+  }, [movieId]);
+
+  const filesByType = (type: string) => (summary?.files ?? []).filter((f) => f.type === type);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -57,12 +61,12 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
     }
   }
 
-  function renderTabContent() {
+  function renderTabContent(s: SummaryResponse) {
     switch (activeTab) {
       case "prompt":
-        return summary.prompt ? (
+        return s.prompt ? (
           <p className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap">
-            {summary.prompt}
+            {s.prompt}
           </p>
         ) : (
           <p className="text-sm text-zinc-500 text-center py-8">
@@ -86,6 +90,14 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
     const count = filesByType(type).length;
     return count > 0 ? count : null;
   };
+
+  if (!summary) {
+    return (
+      <div className="w-full max-w-3xl flex items-center justify-center py-24">
+        <span className="text-zinc-500 text-sm animate-pulse">요약 정보를 불러오는 중...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-3xl flex flex-col gap-6">
@@ -151,7 +163,7 @@ export default function FeedbackPanel({ movieId, summary }: Props) {
         </div>
 
         {/* 우측 콘텐츠 */}
-        <div className="flex-1 p-5 min-h-48">{renderTabContent()}</div>
+        <div className="flex-1 p-5 min-h-48">{renderTabContent(summary)}</div>
       </div>
     </div>
   );
