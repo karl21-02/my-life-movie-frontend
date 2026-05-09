@@ -45,16 +45,18 @@ export async function handleAuthApiPost(
     return backendResponse;
   }
   if (!backendResponse.ok) {
-    const response = await proxyBackendResponse(backendResponse, request);
+    const response = await createBackendJsonResponse(backendResponse);
     if (backendResponse.status === 401) {
       clearAccessTokenCookie(response);
     }
+    forwardResponseMetadata(backendResponse, response, request);
     return response;
   }
 
   if (action === "logout") {
-    const response = await proxyBackendResponse(backendResponse, request);
+    const response = await createBackendJsonResponse(backendResponse);
     clearAccessTokenCookie(response);
+    forwardResponseMetadata(backendResponse, response, request);
     return response;
   }
 
@@ -62,8 +64,8 @@ export async function handleAuthApiPost(
   const response = NextResponse.json(toAuthSessionResponse(backendBody), {
     status: backendResponse.status,
   });
-  forwardResponseMetadata(backendResponse, response, request);
   setAccessTokenCookie(response, backendBody);
+  forwardResponseMetadata(backendResponse, response, request);
   return response;
 }
 
@@ -183,12 +185,18 @@ async function proxyBackendResponse(
   backendResponse: Response,
   request: NextRequest,
 ): Promise<NextResponse> {
-  const responseBody = await readBackendResponseBody(backendResponse);
-  const response = NextResponse.json(responseBody, {
-    status: backendResponse.status,
-  });
+  const response = await createBackendJsonResponse(backendResponse);
   forwardResponseMetadata(backendResponse, response, request);
   return response;
+}
+
+async function createBackendJsonResponse(
+  backendResponse: Response,
+): Promise<NextResponse> {
+  const responseBody = await readBackendResponseBody(backendResponse);
+  return NextResponse.json(responseBody, {
+    status: backendResponse.status,
+  });
 }
 
 async function readBackendResponseBody(response: Response): Promise<unknown> {

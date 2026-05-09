@@ -72,15 +72,19 @@ describe("auth route handlers", () => {
     expect(response.headers.get("set-cookie")).toContain(
       "my_life_movie.access_token=access-token",
     );
+    expect(response.headers.get("set-cookie")).toContain(
+      "refresh_token=refresh",
+    );
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   });
 
-  it("refresh는 refresh cookie를 백엔드로 전달한다", async () => {
+  it("refresh는 refresh cookie를 백엔드로 전달하고 새 쿠키 2개를 갱신한다", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(backendAuthResponse), {
         status: 200,
         headers: {
           "content-type": "application/json",
+          "set-cookie": "refresh_token=rotated-refresh; HttpOnly; Path=/auth",
         },
       }),
     );
@@ -88,11 +92,39 @@ describe("auth route handlers", () => {
       cookie: "refresh_token=raw-refresh-token",
     });
 
-    await handleAuthApiPost(request, "refresh");
+    const response = await handleAuthApiPost(request, "refresh");
 
     const [, requestInit] = fetchSpy.mock.calls[0];
     const headers = requestInit?.headers as Headers;
     expect(headers.get("Cookie")).toBe("refresh_token=raw-refresh-token");
+    expect(response.headers.get("set-cookie")).toContain(
+      "my_life_movie.access_token=access-token",
+    );
+    expect(response.headers.get("set-cookie")).toContain(
+      "refresh_token=rotated-refresh",
+    );
+  });
+
+  it("logout은 access cookie와 refresh cookie를 함께 삭제한다", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ status: "logged_out" }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "set-cookie": "refresh_token=; Max-Age=0; HttpOnly; Path=/auth",
+        },
+      }),
+    );
+    const request = createJsonRequest("/auth/api/logout", undefined, {
+      cookie: "my_life_movie.access_token=access-token; refresh_token=refresh",
+    });
+
+    const response = await handleAuthApiPost(request, "logout");
+    const setCookieHeader = response.headers.get("set-cookie");
+
+    expect(setCookieHeader).toContain("my_life_movie.access_token=");
+    expect(setCookieHeader).toContain("refresh_token=");
+    expect(setCookieHeader).toContain("Max-Age=0");
   });
 
   it("me는 HttpOnly access cookie를 Bearer header로 백엔드에 전달한다", async () => {
