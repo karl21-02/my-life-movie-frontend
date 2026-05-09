@@ -6,9 +6,12 @@ const SENSITIVE_KEYS = new Set([
   "authorization",
   "cookie",
   "token",
+  "access_token",
   "accesstoken",
+  "refresh_token",
   "refreshtoken",
   "password",
+  "api_key",
   "apikey",
   "secret",
   "payload",
@@ -36,12 +39,26 @@ function redact(value: unknown): unknown {
     return Object.fromEntries(
       Object.entries(value).map(([key, item]) => [
         key,
-        SENSITIVE_KEYS.has(key.toLowerCase()) ? "[REDACTED]" : redact(item),
+        isSensitiveKey(key) ? "[REDACTED]" : redact(item),
       ]),
     );
   }
 
   return value;
+}
+
+function isSensitiveKey(key: string): boolean {
+  const normalizedKey = key.toLowerCase().replaceAll(/[-_\s]/g, "");
+  return (
+    SENSITIVE_KEYS.has(key.toLowerCase()) ||
+    normalizedKey.includes("accesstoken") ||
+    normalizedKey.includes("refreshtoken") ||
+    normalizedKey.includes("authorization") ||
+    normalizedKey.includes("password") ||
+    normalizedKey.includes("apikey") ||
+    normalizedKey.includes("secret") ||
+    normalizedKey === "cookie"
+  );
 }
 
 function shouldLog(level: LogLevel): boolean {

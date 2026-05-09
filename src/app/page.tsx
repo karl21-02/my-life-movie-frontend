@@ -77,18 +77,18 @@ export default function Home() {
                 id="start"
                 className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
               >
-                <a
-                  href="#story"
+                <Link
+                  href="/auth/signup"
                   className="inline-flex h-12 items-center justify-center rounded-lg bg-[#f1c76a] px-6 text-base font-semibold text-[#1b1510] transition hover:bg-[#ffdc86] focus:outline-none focus:ring-2 focus:ring-[#fff8ed] focus:ring-offset-2 focus:ring-offset-[#120f0f]"
                 >
                   영화 만들기
-                </a>
-                <a
-                  href="#story"
+                </Link>
+                <Link
+                  href="/auth/login"
                   className="inline-flex h-12 items-center justify-center rounded-lg border border-[#fff8ed]/28 px-6 text-base font-semibold text-[#fff8ed] transition hover:border-[#fff8ed]/60 hover:bg-[#fff8ed]/8 focus:outline-none focus:ring-2 focus:ring-[#fff8ed] focus:ring-offset-2 focus:ring-offset-[#120f0f]"
                 >
-                  먼저 둘러보기
-                </a>
+                  로그인
+                </Link>
               </div>
             </div>
 

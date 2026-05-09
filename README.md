@@ -81,7 +81,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-기본 주소는 `http://localhost:3000`입니다. 브라우저 API 기본 주소는 `NEXT_PUBLIC_API_BASE_URL`로 관리하며, 기본값은 `http://localhost:8000`입니다. 컨테이너 내부 서버 라우트에서 백엔드로 호출할 때는 `SERVER_API_BASE_URL`을 사용합니다.
+기본 주소는 `http://localhost:3000`입니다. 인증 API는 브라우저에서 백엔드를 직접 호출하지 않고 Next.js Route Handler(`/auth/api/*`)를 거쳐 같은 출처로 호출합니다. 컨테이너 내부 서버 라우트에서 백엔드로 호출할 때는 `SERVER_API_BASE_URL`을 사용합니다.
 
 로컬 `3000` 포트가 이미 사용 중이면 `.env`에서 `FRONTEND_PORT=3001`처럼 변경해 실행합니다.
 
@@ -89,6 +89,23 @@ docker compose up --build
 |---------|-----|
 | Frontend | http://localhost:3000 |
 | Backend Proxy Health Check | http://localhost:3000/api/backend-health |
+
+### 인증 API 흐름
+
+현재 인증 화면은 백엔드 인증 API와 연결되어 있습니다. Refresh token은 백엔드가 발급한 `HttpOnly` cookie를 Next Route Handler가 전달하고, access token은 브라우저 JavaScript에 노출하지 않고 프론트 서버의 `HttpOnly` cookie로 관리합니다.
+
+| Page | URL |
+|------|-----|
+| 회원가입 | http://localhost:3000/auth/signup |
+| 로그인 | http://localhost:3000/auth/login |
+
+| Route Handler | Backend |
+|---------------|---------|
+| POST `/auth/api/signup` | POST `/auth/signup` |
+| POST `/auth/api/login` | POST `/auth/login` |
+| POST `/auth/api/refresh` | POST `/auth/refresh` |
+| POST `/auth/api/logout` | POST `/auth/logout` |
+| GET `/auth/api/me` | GET `/auth/me` |
 
 ## 📚 Docs
 

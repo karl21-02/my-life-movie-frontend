@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { createRequestId, REQUEST_ID_HEADER } from "@/lib/request-id";
 
 export type ProblemDetails = {
   type: string;
@@ -14,25 +15,13 @@ export type ProblemDetails = {
 export type ApiClientOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   requestId?: string;
+  timeoutMs?: number;
 };
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
 
-const REQUEST_ID_HEADER = "X-Request-ID";
-
-function createRequestId(): string {
-  if (
-    typeof globalThis.crypto !== "undefined" &&
-    "randomUUID" in globalThis.crypto
-  ) {
-    return `req_${globalThis.crypto.randomUUID().replaceAll("-", "")}`;
-  }
-
-  return `req_${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2)}`;
-}
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 function isJsonResponse(response: Response): boolean {
   return response.headers.get("content-type")?.includes("application/json") ?? false;
@@ -72,6 +61,15 @@ export async function apiClient<T>(
   const requestId = options.requestId ?? createRequestId();
   const headers = new Headers(options.headers);
   headers.set(REQUEST_ID_HEADER, requestId);
+  const abortController = new AbortController();
+  let didTimeout = false;
+  const timeout = setTimeout(
+    () => {
+      didTimeout = true;
+      abortController.abort();
+    },
+    options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  );
 
   const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -87,11 +85,20 @@ export async function apiClient<T>(
     method: options.method ?? "GET",
   });
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-    body: hasBody ? JSON.stringify(options.body) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers,
+      credentials: options.credentials ?? "same-origin",
+      body: hasBody ? JSON.stringify(options.body) : undefined,
+      signal: options.signal ?? abortController.signal,
+    });
+  } catch (error) {
+    throw normalizeNetworkError(error, path, requestId, didTimeout);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const body = isJsonResponse(response) ? await response.json() : undefined;
@@ -135,6 +142,37 @@ export async function apiClient<T>(
   }
 
   return (await response.text()) as T;
+}
+
+function normalizeNetworkError(
+  error: unknown,
+  path: string,
+  requestId: string,
+  didTimeout: boolean,
+): ApiError {
+  const isTimeout =
+    didTimeout ||
+    (error instanceof DOMException && error.name === "AbortError");
+  const problem: ProblemDetails = {
+    type: isTimeout ? "request_timeout" : "network_error",
+    title: isTimeout ? "Request Timeout" : "Network Error",
+    status: 0,
+    detail: isTimeout
+      ? "요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+      : "네트워크 요청을 완료하지 못했습니다.",
+    instance: path,
+    code: isTimeout ? "REQUEST_TIMEOUT" : "NETWORK_ERROR",
+    request_id: requestId,
+    errors: [],
+  };
+
+  logger.warn("api_request_network_failed", {
+    request_id: requestId,
+    path,
+    error_code: problem.code,
+  });
+
+  return new ApiError(problem);
 }
 
 // --- Types ---
