@@ -196,12 +196,12 @@ export const api = {
 
   movies: {
     createDraft: (themeId: number) =>
-      apiClient<{ movie_id: number; status: string }>("/api/v1/movies/draft", {
+      apiClient<{ movie_id: number; status: string }>("/api/movies/draft", {
         method: "POST",
         body: { theme_id: themeId },
       }),
     updateMusic: (movieId: number, musicId: number) =>
-      apiClient(`/api/v1/movies/${movieId}/music`, {
+      apiClient(`/api/movies/${movieId}/music`, {
         method: "PUT",
         body: { music_id: musicId },
       }),
@@ -211,7 +211,7 @@ export const api = {
       form.append("file", file);
       const uploadToken = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
       const response = await fetch(
-        `${API_BASE_URL}/api/v1/movies/${movieId}/files`,
+        `${API_BASE_URL}/api/movies/${movieId}/files`,
         {
           method: "POST",
           headers: {
@@ -232,7 +232,7 @@ export const api = {
               title: "Upload Failed",
               status: response.status,
               detail: response.statusText || "파일 업로드에 실패했습니다.",
-              instance: `/api/v1/movies/${movieId}/files`,
+              instance: `/api/movies/${movieId}/files`,
               code: "HTTP_ERROR",
               request_id: requestId,
               errors: [],
@@ -243,14 +243,14 @@ export const api = {
     },
     chat: (movieId: number, message: string) =>
       apiClient<{ ai_question: string; current_draft: string }>(
-        `/api/v1/movies/${movieId}/chat`,
+        `/api/movies/${movieId}/chat`,
         { method: "POST", body: { message } },
       ),
     getChatHistory: (movieId: number) =>
-      apiClient<{ history: ChatMessage[] }>(`/api/v1/movies/${movieId}/chat`),
+      apiClient<{ history: ChatMessage[] }>(`/api/movies/${movieId}/chat`),
     getSummary: (movieId: number) =>
-      apiClient<SummaryResponse>(`/api/v1/movies/${movieId}/summary`),
+      apiClient<SummaryResponse>(`/api/movies/${movieId}/summary`),
     generate: (movieId: number) =>
-      apiClient(`/api/v1/movies/${movieId}/generate`, { method: "POST" }),
+      apiClient(`/api/movies/${movieId}/generate`, { method: "POST" }),
   },
 };
