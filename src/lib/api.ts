@@ -13,6 +13,7 @@ export type ProblemDetails = {
 };
 
 export type ApiClientOptions = Omit<RequestInit, "body"> & {
+  baseUrl?: string;
   body?: unknown;
   requestId?: string;
   timeoutMs?: number;
@@ -58,8 +59,17 @@ export async function apiClient<T>(
   path: string,
   options: ApiClientOptions = {},
 ): Promise<T> {
-  const requestId = options.requestId ?? createRequestId();
-  const headers = new Headers(options.headers);
+  const {
+    baseUrl = API_BASE_URL,
+    body,
+    headers: requestHeaders,
+    requestId: requestedRequestId,
+    signal,
+    timeoutMs,
+    ...fetchOptions
+  } = options;
+  const requestId = requestedRequestId ?? createRequestId();
+  const headers = new Headers(requestHeaders);
   headers.set(REQUEST_ID_HEADER, requestId);
   const abortController = new AbortController();
   let didTimeout = false;
@@ -68,13 +78,10 @@ export async function apiClient<T>(
       didTimeout = true;
       abortController.abort();
     },
-    options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    timeoutMs ?? DEFAULT_TIMEOUT_MS,
   );
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  const hasBody = options.body !== undefined;
+  const hasBody = body !== undefined;
   if (hasBody && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -82,17 +89,17 @@ export async function apiClient<T>(
   logger.debug("api_request_started", {
     request_id: requestId,
     path,
-    method: options.method ?? "GET",
+    method: fetchOptions.method ?? "GET",
   });
 
   let response: Response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
+    response = await fetch(buildRequestUrl(path, baseUrl), {
+      ...fetchOptions,
       headers,
-      credentials: options.credentials ?? "same-origin",
-      body: hasBody ? JSON.stringify(options.body) : undefined,
-      signal: options.signal ?? abortController.signal,
+      credentials: fetchOptions.credentials ?? "same-origin",
+      body: hasBody ? JSON.stringify(body) : undefined,
+      signal: signal ?? abortController.signal,
     });
   } catch (error) {
     throw normalizeNetworkError(error, path, requestId, didTimeout);
@@ -118,7 +125,7 @@ export async function apiClient<T>(
     logger.warn("api_request_failed", {
       request_id: problem.request_id,
       path,
-      method: options.method ?? "GET",
+      method: fetchOptions.method ?? "GET",
       status_code: problem.status,
       error_code: problem.code,
     });
@@ -129,7 +136,7 @@ export async function apiClient<T>(
   logger.debug("api_request_succeeded", {
     request_id: response.headers.get(REQUEST_ID_HEADER) ?? requestId,
     path,
-    method: options.method ?? "GET",
+    method: fetchOptions.method ?? "GET",
     status_code: response.status,
   });
 
@@ -142,6 +149,19 @@ export async function apiClient<T>(
   }
 
   return (await response.text()) as T;
+}
+
+function buildRequestUrl(path: string, baseUrl: string): string {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  if (!baseUrl) {
+    return path;
+  }
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${normalizedPath}`;
 }
 
 function normalizeNetworkError(

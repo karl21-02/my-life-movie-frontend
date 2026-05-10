@@ -45,7 +45,7 @@ describe("auth route handlers", () => {
         },
       }),
     );
-    const request = createJsonRequest("/auth/api/login", {
+    const request = createJsonRequest("/api/auth/login", {
       email: "user@example.com",
       password: "password123",
     });
@@ -88,7 +88,7 @@ describe("auth route handlers", () => {
         },
       }),
     );
-    const request = createJsonRequest("/auth/api/refresh", undefined, {
+    const request = createJsonRequest("/api/auth/refresh", undefined, {
       cookie: "refresh_token=raw-refresh-token",
     });
 
@@ -115,7 +115,7 @@ describe("auth route handlers", () => {
         },
       }),
     );
-    const request = createJsonRequest("/auth/api/logout", undefined, {
+    const request = createJsonRequest("/api/auth/logout", undefined, {
       cookie: "my_life_movie.access_token=access-token; refresh_token=refresh",
     });
 
@@ -136,7 +136,7 @@ describe("auth route handlers", () => {
         },
       }),
     );
-    const request = new NextRequest("http://localhost/auth/api/me", {
+    const request = new NextRequest("http://localhost/api/auth/me", {
       method: "GET",
       headers: {
         cookie: "my_life_movie.access_token=access-token",
@@ -153,7 +153,7 @@ describe("auth route handlers", () => {
   });
 
   it("me access cookie가 없으면 AUTH_REQUIRED를 반환한다", async () => {
-    const request = new NextRequest("http://localhost/auth/api/me", {
+    const request = new NextRequest("http://localhost/api/auth/me", {
       method: "GET",
       headers: {
         "x-request-id": "req_missing",
@@ -170,7 +170,7 @@ describe("auth route handlers", () => {
 
   it("백엔드 통신 실패는 BACKEND_UNAVAILABLE로 정규화한다", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
-    const request = createJsonRequest("/auth/api/login", {
+    const request = createJsonRequest("/api/auth/login", {
       email: "user@example.com",
       password: "password123",
     });

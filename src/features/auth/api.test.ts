@@ -27,7 +27,8 @@ describe("auth api", () => {
       display_name: "테스터",
     });
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/signup", {
+    expect(apiClientMock).toHaveBeenCalledWith("/api/auth/signup", {
+      baseUrl: "",
       method: "POST",
       body: {
         email: "user@example.com",
@@ -43,7 +44,8 @@ describe("auth api", () => {
       password: "password123",
     });
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/login", {
+    expect(apiClientMock).toHaveBeenCalledWith("/api/auth/login", {
+      baseUrl: "",
       method: "POST",
       body: {
         email: "user@example.com",
@@ -56,10 +58,12 @@ describe("auth api", () => {
     refreshAccessToken();
     logout();
 
-    expect(apiClientMock).toHaveBeenNthCalledWith(1, "/auth/api/refresh", {
+    expect(apiClientMock).toHaveBeenNthCalledWith(1, "/api/auth/refresh", {
+      baseUrl: "",
       method: "POST",
     });
-    expect(apiClientMock).toHaveBeenNthCalledWith(2, "/auth/api/logout", {
+    expect(apiClientMock).toHaveBeenNthCalledWith(2, "/api/auth/logout", {
+      baseUrl: "",
       method: "POST",
     });
   });
@@ -67,7 +71,8 @@ describe("auth api", () => {
   it("me 요청은 same-origin 인증 API로 호출한다", () => {
     getCurrentUser();
 
-    expect(apiClientMock).toHaveBeenCalledWith("/auth/api/me", {
+    expect(apiClientMock).toHaveBeenCalledWith("/api/auth/me", {
+      baseUrl: "",
       method: "GET",
     });
   });

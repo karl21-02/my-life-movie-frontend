@@ -45,6 +45,32 @@ describe("apiClient", () => {
     expect(headers.get("Content-Type")).toBe("application/json");
   });
 
+  it("baseUrl을 비우면 상대 경로를 그대로 호출한다", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    await apiClient("/api/auth/signup", {
+      baseUrl: "",
+      method: "POST",
+      body: {
+        email: "user@example.com",
+      },
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/auth/signup",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
+
   it("Problem Details 응답을 ApiError로 변환한다", async () => {
     const problem: ProblemDetails = {
       type: "invalid_credentials",
@@ -75,7 +101,7 @@ describe("apiClient", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
 
     await expect(
-      apiClient("/auth/api/login", {
+      apiClient("/api/auth/login", {
         requestId: "req_network",
       }),
     ).rejects.toMatchObject<ApiError>({

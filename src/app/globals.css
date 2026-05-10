@@ -20,37 +20,9 @@ body {
 
 .splash-backdrop {
   background:
-    linear-gradient(115deg, rgba(18, 15, 15, 0.98) 0%, rgba(18, 15, 15, 0.68) 44%, rgba(18, 15, 15, 0.1) 100%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 248, 237, 0.08) 0 2px,
-      transparent 2px 82px
-    ),
-    linear-gradient(135deg, #1b1412 0%, #6f2f2f 38%, #2b7068 66%, #e3b65a 100%);
-}
-
-.splash-projector {
-  clip-path: polygon(0 14%, 100% 0, 100% 100%, 0 86%);
-  background:
-    linear-gradient(90deg, rgba(241, 199, 106, 0.22), rgba(255, 248, 237, 0.04) 72%, transparent),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 248, 237, 0.12) 0 1px,
-      transparent 1px 34px
-    );
-  opacity: 0.78;
-}
-
-.splash-reel {
-  animation: splash-reel-drift 9s ease-in-out infinite alternate;
-}
-
-@keyframes splash-reel-drift {
-  from {
-    transform: translateY(-50%) rotate(3deg);
-  }
-
-  to {
-    transform: translateY(-52%) rotate(2deg);
-  }
+    linear-gradient(180deg, rgba(18, 15, 15, 0.08) 0%, rgba(18, 15, 15, 0.56) 54%, #120f0f 100%),
+    linear-gradient(90deg, rgba(18, 15, 15, 0.96) 0%, rgba(18, 15, 15, 0.78) 42%, rgba(18, 15, 15, 0.18) 100%),
+    url("/background.png") top center / auto clamp(300px, 44vw, 560px) no-repeat,
+    radial-gradient(circle at 78% 18%, rgba(241, 199, 106, 0.18), transparent 34%),
+    #120f0f;
 }

@@ -1,37 +1,10 @@
 import Link from "next/link";
 
-const scenes = [
-  {
-    title: "Scene 01",
-    caption: "기억",
-    className: "from-[#f7c873] via-[#c55b3c] to-[#251413]",
-  },
-  {
-    title: "Scene 02",
-    caption: "음악",
-    className: "from-[#55c7a5] via-[#2f6768] to-[#171b22]",
-  },
-  {
-    title: "Scene 03",
-    caption: "대화",
-    className: "from-[#efeee7] via-[#b85656] to-[#1a1114]",
-  },
-  {
-    title: "Scene 04",
-    caption: "포스터",
-    className: "from-[#f0d46e] via-[#2a7568] to-[#151313]",
-  },
-];
-
 export default function Home() {
   return (
     <main className="min-h-svh bg-[#120f0f] text-[#fff8ed]">
       <section className="relative isolate flex min-h-[92svh] overflow-hidden">
         <div aria-hidden className="splash-backdrop absolute inset-0" />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,15,15,0.96)_0%,rgba(18,15,15,0.82)_42%,rgba(18,15,15,0.18)_100%)]"
-        />
         <div
           aria-hidden
           className="absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(180deg,rgba(18,15,15,0)_0%,#120f0f_82%)]"
@@ -59,8 +32,8 @@ export default function Home() {
             </nav>
           </header>
 
-          <div className="grid flex-1 items-center gap-10 py-16 lg:grid-cols-[minmax(0,0.92fr)_minmax(380px,0.72fr)] lg:py-10">
-            <div className="max-w-3xl">
+          <div className="flex flex-1 items-center py-16 lg:py-10">
+            <div className="max-w-3xl pt-20 sm:pt-24 lg:pt-32">
               <p className="mb-5 text-sm font-semibold text-[#f1c76a]">
                 PERSONAL CINEMA ARCHIVE
               </p>
@@ -89,33 +62,6 @@ export default function Home() {
                 >
                   로그인
                 </Link>
-              </div>
-            </div>
-
-            <div
-              className="relative hidden min-h-[620px] lg:block"
-              aria-hidden="true"
-            >
-              <div className="splash-projector absolute left-0 top-1/2 h-[520px] w-[420px] -translate-y-1/2" />
-              <div className="splash-reel absolute right-0 top-1/2 grid w-[460px] -translate-y-1/2 rotate-3 grid-cols-2 gap-4">
-                {scenes.map((scene) => (
-                  <div
-                    key={scene.title}
-                    className={`relative min-h-64 overflow-hidden rounded-lg border border-[#fff8ed]/18 bg-gradient-to-br ${scene.className} p-4 shadow-2xl shadow-black/40`}
-                  >
-                    <div className="absolute inset-x-4 top-4 flex justify-between text-[11px] font-semibold uppercase text-[#fff8ed]/78">
-                      <span>{scene.title}</span>
-                      <span>00:0{scene.title.at(-1)}</span>
-                    </div>
-                    <div className="absolute inset-x-5 bottom-5">
-                      <div className="h-24 rounded-md border border-[#fff8ed]/18 bg-[#fff8ed]/12 backdrop-blur-[1px]" />
-                      <p className="mt-3 text-2xl font-semibold text-[#fff8ed]">
-                        {scene.caption}
-                      </p>
-                    </div>
-                    <div className="absolute left-0 top-0 h-full w-7 border-r border-black/30 bg-black/38" />
-                  </div>
-                ))}
               </div>
             </div>
           </div>

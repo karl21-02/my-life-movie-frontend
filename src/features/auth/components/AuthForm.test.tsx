@@ -79,6 +79,12 @@ describe("AuthForm", () => {
     expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
   });
 
+  it("JS 로드 전 기본 제출에서도 비밀번호가 URL query로 노출되지 않도록 post method를 사용한다", () => {
+    render(<AuthForm mode="signup" />);
+
+    expect(document.querySelector("form")).toHaveAttribute("method", "post");
+  });
+
   it("Problem Details 에러 메시지를 사용자에게 보여준다", async () => {
     const problem: ProblemDetails = {
       type: "invalid_credentials",
