@@ -45,6 +45,32 @@ describe("apiClient", () => {
     expect(headers.get("Content-Type")).toBe("application/json");
   });
 
+  it("baseUrl을 비우면 상대 경로를 그대로 호출한다", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    await apiClient("/auth/api/signup", {
+      baseUrl: "",
+      method: "POST",
+      body: {
+        email: "user@example.com",
+      },
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/auth/api/signup",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
+
   it("Problem Details 응답을 ApiError로 변환한다", async () => {
     const problem: ProblemDetails = {
       type: "invalid_credentials",

@@ -28,6 +28,7 @@ describe("auth api", () => {
     });
 
     expect(apiClientMock).toHaveBeenCalledWith("/auth/api/signup", {
+      baseUrl: "",
       method: "POST",
       body: {
         email: "user@example.com",
@@ -44,6 +45,7 @@ describe("auth api", () => {
     });
 
     expect(apiClientMock).toHaveBeenCalledWith("/auth/api/login", {
+      baseUrl: "",
       method: "POST",
       body: {
         email: "user@example.com",
@@ -57,9 +59,11 @@ describe("auth api", () => {
     logout();
 
     expect(apiClientMock).toHaveBeenNthCalledWith(1, "/auth/api/refresh", {
+      baseUrl: "",
       method: "POST",
     });
     expect(apiClientMock).toHaveBeenNthCalledWith(2, "/auth/api/logout", {
+      baseUrl: "",
       method: "POST",
     });
   });
@@ -68,6 +72,7 @@ describe("auth api", () => {
     getCurrentUser();
 
     expect(apiClientMock).toHaveBeenCalledWith("/auth/api/me", {
+      baseUrl: "",
       method: "GET",
     });
   });

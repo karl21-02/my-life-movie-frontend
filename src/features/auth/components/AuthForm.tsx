@@ -115,6 +115,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
 
           <form
+            method="post"
             onSubmit={handleSubmit}
             className="rounded-lg border border-[#fff8ed]/16 bg-[#fff8ed]/9 p-6 shadow-2xl shadow-black/35 backdrop-blur-md"
           >
