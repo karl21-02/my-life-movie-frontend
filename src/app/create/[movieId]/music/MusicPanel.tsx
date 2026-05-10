@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { api, type MusicTrack } from "@/lib/api";
 
 interface Props {
@@ -23,9 +23,16 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
   const [saving, setSaving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  function isPlayable(url: string) {
-    return url.startsWith("http://") || url.startsWith("https://");
+  function isPlayable(url: string | null | undefined) {
+    return !!url && (url.startsWith("http://") || url.startsWith("https://"));
   }
+
+  useEffect(() => {
+    return () => {
+      audioRef.current?.pause();
+      audioRef.current = null;
+    };
+  }, []);
 
   function handlePlay(track: MusicTrack) {
     if (playingId === track.music_id) {
@@ -37,7 +44,9 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
       audioRef.current.pause();
     }
     const audio = new Audio(track.file_url);
-    audio.play().catch(() => {});
+    audio.play().catch(() => {
+      setPlayingId(null);
+    });
     audio.onended = () => setPlayingId(null);
     audioRef.current = audio;
     setPlayingId(track.music_id);
@@ -87,7 +96,9 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
       <section className="flex-1 bg-zinc-900 rounded-2xl p-6 flex flex-col gap-3">
         <h2 className="font-semibold text-zinc-200 mb-2">테마 음악 목록</h2>
         <ul className="flex flex-col gap-2">
-          {tracks.map((track) => (
+          {tracks.map((track) => {
+            const playable = isPlayable(track.file_url);
+            return (
             <li
               key={track.music_id}
               className={`flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition-colors border-2 ${
@@ -104,9 +115,9 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
                     e.stopPropagation();
                     handlePlay(track);
                   }}
-                  disabled={!isPlayable(track.file_url)}
-                  title={isPlayable(track.file_url) ? undefined : "재생 불가 (Spotify 연동 후 지원)"}
-                  className={`shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 flex items-center justify-center text-[#e3b65a] transition-colors ${isPlayable(track.file_url) ? "hover:bg-[#e3b65a]/30" : "opacity-40 cursor-not-allowed"}`}
+                  disabled={!playable}
+                  title={playable ? undefined : "재생 불가 (Spotify 연동 후 지원)"}
+                  className={`shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 flex items-center justify-center text-[#e3b65a] transition-colors ${playable ? "hover:bg-[#e3b65a]/30" : "opacity-40 cursor-not-allowed"}`}
                 >
                   {playingId === track.music_id ? "⏸" : "▶"}
                 </button>
@@ -119,7 +130,8 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
                 <span className="shrink-0 text-[#e3b65a] text-sm font-medium">선택됨</span>
               )}
             </li>
-          ))}
+          );
+          })}
         </ul>
         <button
           onClick={handleConfirm}
