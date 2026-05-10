@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { api, type ChatMessage, type FileInfo } from "@/lib/api";
 import StepGuideModal from "@/components/StepGuideModal";
 
@@ -63,7 +63,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
     }
   }
 
-  async function uploadFile(file: File) {
+  const uploadFile = useCallback(async (file: File) => {
     const ext = getExt(file.name);
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       alert(`허용되지 않는 파일 형식입니다: ${ext}\n허용: jpg, jpeg, png, pdf, txt, mp4, mov`);
@@ -78,7 +78,7 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
     } finally {
       setUploading(false);
     }
-  }
+  }, [movieId]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -93,8 +93,14 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
       const files = Array.from(e.dataTransfer.files);
       for (const f of files) await uploadFile(f);
     },
-    [movieId],
+    [uploadFile],
   );
+
+  useEffect(() => {
+    api.movies.getChatHistory(movieId).then((res) => {
+      if (res.history.length > 0) setMessages(res.history);
+    }).catch(() => {});
+  }, [movieId]);
 
   async function handleNext() {
     setNavigating(true);

@@ -23,6 +23,10 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
   const [saving, setSaving] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  function isPlayable(url: string) {
+    return url.startsWith("http://") || url.startsWith("https://");
+  }
+
   function handlePlay(track: MusicTrack) {
     if (playingId === track.music_id) {
       audioRef.current?.pause();
@@ -100,7 +104,9 @@ export default function MusicPanel({ movieId, themeId, defaultTracks }: Props) {
                     e.stopPropagation();
                     handlePlay(track);
                   }}
-                  className="shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 hover:bg-[#e3b65a]/30 flex items-center justify-center text-[#e3b65a] transition-colors"
+                  disabled={!isPlayable(track.file_url)}
+                  title={isPlayable(track.file_url) ? undefined : "재생 불가 (Spotify 연동 후 지원)"}
+                  className={`shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 flex items-center justify-center text-[#e3b65a] transition-colors ${isPlayable(track.file_url) ? "hover:bg-[#e3b65a]/30" : "opacity-40 cursor-not-allowed"}`}
                 >
                   {playingId === track.music_id ? "⏸" : "▶"}
                 </button>
