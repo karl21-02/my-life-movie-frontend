@@ -194,3 +194,121 @@ function normalizeNetworkError(
 
   return new ApiError(problem);
 }
+
+// --- Types ---
+
+export interface Theme {
+  theme_id: number;
+  name: string;
+  description: string;
+  preview_color: string;
+}
+
+export interface MusicTrack {
+  music_id: number;
+  title: string;
+  file_url: string;
+  is_ai_recommended: boolean;
+}
+
+export interface MusicListResponse {
+  default_tracks: MusicTrack[];
+  ai_recommended: MusicTrack[];
+}
+
+export interface ChatMessage {
+  role: "user" | "ai";
+  message: string;
+}
+
+export interface FileInfo {
+  file_id: string;
+  filename: string;
+  type: string;
+  extracted_text: string;
+}
+
+export interface SummaryResponse {
+  prompt: string;
+  files: FileInfo[];
+  theme: { theme_id: number };
+  music: { music_id: number } | null;
+}
+
+// --- API ---
+
+export const api = {
+  themes: {
+    list: () => apiClient<Theme[]>("/api/v1/themes"),
+  },
+
+  music: {
+    listByTheme: (themeId: number) =>
+      apiClient<MusicListResponse>(`/api/v1/music?theme_id=${themeId}`),
+    recommend: (movieId: number, message: string) =>
+      apiClient<{ ai_message: string; tracks: MusicTrack[] }>(
+        "/api/v1/music/recommend",
+        { method: "POST", body: { movie_id: movieId, message } },
+      ),
+  },
+
+  movies: {
+    createDraft: (themeId: number) =>
+      apiClient<{ movie_id: number; status: string }>("/api/movies/draft", {
+        method: "POST",
+        body: { theme_id: themeId },
+      }),
+    updateMusic: (movieId: number, musicId: number) =>
+      apiClient(`/api/movies/${movieId}/music`, {
+        method: "PUT",
+        body: { music_id: musicId },
+      }),
+    uploadFile: async (movieId: number, file: File): Promise<FileInfo> => {
+      const requestId = `req_${Date.now().toString(36)}`;
+      const form = new FormData();
+      form.append("file", file);
+      const uploadToken = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const response = await fetch(
+        `${API_BASE_URL}/api/movies/${movieId}/files`,
+        {
+          method: "POST",
+          headers: {
+            [REQUEST_ID_HEADER]: requestId,
+            ...(uploadToken ? { Authorization: `Bearer ${uploadToken}` } : {}),
+          },
+          body: form,
+        },
+      );
+      if (!response.ok) {
+        const body = isJsonResponse(response)
+          ? await response.json()
+          : undefined;
+        const problem = isProblemDetails(body)
+          ? body
+          : {
+              type: "http_error",
+              title: "Upload Failed",
+              status: response.status,
+              detail: response.statusText || "파일 업로드에 실패했습니다.",
+              instance: `/api/movies/${movieId}/files`,
+              code: "HTTP_ERROR",
+              request_id: requestId,
+              errors: [],
+            };
+        throw new ApiError(problem);
+      }
+      return response.json() as Promise<FileInfo>;
+    },
+    chat: (movieId: number, message: string) =>
+      apiClient<{ ai_question: string; current_draft: string }>(
+        `/api/movies/${movieId}/chat`,
+        { method: "POST", body: { message } },
+      ),
+    getChatHistory: (movieId: number) =>
+      apiClient<{ history: ChatMessage[] }>(`/api/movies/${movieId}/chat`),
+    getSummary: (movieId: number) =>
+      apiClient<SummaryResponse>(`/api/movies/${movieId}/summary`),
+    generate: (movieId: number) =>
+      apiClient(`/api/movies/${movieId}/generate`, { method: "POST" }),
+  },
+};
