@@ -81,7 +81,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-기본 주소는 `http://localhost:3000`입니다. 인증 API는 브라우저에서 백엔드를 직접 호출하지 않고 Next.js Route Handler(`/auth/api/*`)를 거쳐 같은 출처로 호출합니다. 컨테이너 내부 서버 라우트에서 백엔드로 호출할 때는 `SERVER_API_BASE_URL`을 사용합니다.
+기본 주소는 `http://localhost:3000`입니다. 인증 API는 브라우저에서 백엔드를 직접 호출하지 않고 Next.js Route Handler(`/api/auth/*`)를 거쳐 같은 출처로 호출합니다. 컨테이너 내부 서버 라우트에서 백엔드로 호출할 때는 `SERVER_API_BASE_URL`을 사용합니다.
 
 로컬 `3000` 포트가 이미 사용 중이면 `.env`에서 `FRONTEND_PORT=3001`처럼 변경해 실행합니다.
 
@@ -101,11 +101,11 @@ docker compose up --build
 
 | Route Handler | Backend |
 |---------------|---------|
-| POST `/auth/api/signup` | POST `/auth/signup` |
-| POST `/auth/api/login` | POST `/auth/login` |
-| POST `/auth/api/refresh` | POST `/auth/refresh` |
-| POST `/auth/api/logout` | POST `/auth/logout` |
-| GET `/auth/api/me` | GET `/auth/me` |
+| POST `/api/auth/signup` | POST `/auth/signup` |
+| POST `/api/auth/login` | POST `/auth/login` |
+| POST `/api/auth/refresh` | POST `/auth/refresh` |
+| POST `/api/auth/logout` | POST `/auth/logout` |
+| GET `/api/auth/me` | GET `/auth/me` |
 
 ## 📚 Docs
 

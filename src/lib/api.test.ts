@@ -55,7 +55,7 @@ describe("apiClient", () => {
       }),
     );
 
-    await apiClient("/auth/api/signup", {
+    await apiClient("/api/auth/signup", {
       baseUrl: "",
       method: "POST",
       body: {
@@ -64,7 +64,7 @@ describe("apiClient", () => {
     });
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "/auth/api/signup",
+      "/api/auth/signup",
       expect.objectContaining({
         method: "POST",
       }),
@@ -101,7 +101,7 @@ describe("apiClient", () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
 
     await expect(
-      apiClient("/auth/api/login", {
+      apiClient("/api/auth/login", {
         requestId: "req_network",
       }),
     ).rejects.toMatchObject<ApiError>({

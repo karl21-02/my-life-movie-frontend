@@ -7,7 +7,7 @@ import type {
   SignupPayload,
 } from "@/features/auth/types";
 
-const AUTH_API_BASE_PATH = "/auth/api";
+const AUTH_API_BASE_PATH = "/api/auth";
 const AUTH_API_CLIENT_OPTIONS = {
   baseUrl: "",
 } as const;
