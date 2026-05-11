@@ -19,10 +19,9 @@ export type ApiClientOptions = Omit<RequestInit, "body"> & {
   timeoutMs?: number;
 };
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
-
 const DEFAULT_TIMEOUT_MS = 10_000;
+const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
+const SERVER_API_BASE_URL_FALLBACK = "http://localhost:8000";
 
 function isJsonResponse(response: Response): boolean {
   return response.headers.get("content-type")?.includes("application/json") ?? false;
@@ -60,7 +59,7 @@ export async function apiClient<T>(
   options: ApiClientOptions = {},
 ): Promise<T> {
   const {
-    baseUrl = API_BASE_URL,
+    baseUrl = getDefaultApiBaseUrl(),
     body,
     headers: requestHeaders,
     requestId: requestedRequestId,
@@ -82,7 +81,21 @@ export async function apiClient<T>(
   );
 
   const hasBody = body !== undefined;
-  if (hasBody && !headers.has("Content-Type")) {
+  const serializedBody = hasBody ? serializeRequestBody(body, headers) : undefined;
+  if (hasBody && isBodylessMethod(fetchOptions.method)) {
+    throw new ApiError({
+      type: "invalid_request_body",
+      title: "Invalid Request Body",
+      status: 0,
+      detail: "GET 또는 HEAD 요청에는 body를 포함할 수 없습니다.",
+      instance: path,
+      code: "INVALID_REQUEST_BODY",
+      request_id: requestId,
+      errors: [],
+    });
+  }
+
+  if (hasBody && !isNativeRequestBody(body) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -98,7 +111,7 @@ export async function apiClient<T>(
       ...fetchOptions,
       headers,
       credentials: fetchOptions.credentials ?? "same-origin",
-      body: hasBody ? JSON.stringify(body) : undefined,
+      body: serializedBody,
       signal: signal ?? abortController.signal,
     });
   } catch (error) {
@@ -164,6 +177,44 @@ function buildRequestUrl(path: string, baseUrl: string): string {
   return `${baseUrl}${normalizedPath}`;
 }
 
+function getDefaultApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+  }
+
+  return (
+    process.env.SERVER_API_BASE_URL ??
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    SERVER_API_BASE_URL_FALLBACK
+  ).replace(/\/$/, "");
+}
+
+function serializeRequestBody(body: unknown, headers: Headers): BodyInit {
+  if (isNativeRequestBody(body)) {
+    if (body instanceof FormData) {
+      headers.delete("Content-Type");
+    }
+    return body;
+  }
+
+  return JSON.stringify(body);
+}
+
+function isNativeRequestBody(body: unknown): body is BodyInit {
+  return (
+    typeof body === "string" ||
+    body instanceof Blob ||
+    body instanceof FormData ||
+    body instanceof URLSearchParams ||
+    body instanceof ArrayBuffer ||
+    ArrayBuffer.isView(body)
+  );
+}
+
+function isBodylessMethod(method: string | undefined): boolean {
+  return BODYLESS_METHODS.has((method ?? "GET").toUpperCase());
+}
+
 function normalizeNetworkError(
   error: unknown,
   path: string,
@@ -195,7 +246,7 @@ function normalizeNetworkError(
   return new ApiError(problem);
 }
 
-// --- Types ---
+// --- 응답 타입 ---
 
 export interface Theme {
   theme_id: number;
@@ -235,7 +286,7 @@ export interface SummaryResponse {
   music: { music_id: number } | null;
 }
 
-// --- API ---
+// --- 기능별 API ---
 
 export const api = {
   themes: {
@@ -264,40 +315,12 @@ export const api = {
         body: { music_id: musicId },
       }),
     uploadFile: async (movieId: number, file: File): Promise<FileInfo> => {
-      const requestId = `req_${Date.now().toString(36)}`;
       const form = new FormData();
       form.append("file", file);
-      const uploadToken = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      const response = await fetch(
-        `${API_BASE_URL}/api/movies/${movieId}/files`,
-        {
-          method: "POST",
-          headers: {
-            [REQUEST_ID_HEADER]: requestId,
-            ...(uploadToken ? { Authorization: `Bearer ${uploadToken}` } : {}),
-          },
-          body: form,
-        },
-      );
-      if (!response.ok) {
-        const body = isJsonResponse(response)
-          ? await response.json()
-          : undefined;
-        const problem = isProblemDetails(body)
-          ? body
-          : {
-              type: "http_error",
-              title: "Upload Failed",
-              status: response.status,
-              detail: response.statusText || "파일 업로드에 실패했습니다.",
-              instance: `/api/movies/${movieId}/files`,
-              code: "HTTP_ERROR",
-              request_id: requestId,
-              errors: [],
-            };
-        throw new ApiError(problem);
-      }
-      return response.json() as Promise<FileInfo>;
+      return apiClient<FileInfo>(`/api/movies/${movieId}/files`, {
+        method: "POST",
+        body: form,
+      });
     },
     chat: (movieId: number, message: string) =>
       apiClient<{ ai_question: string; current_draft: string }>(

@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 import { ApiError } from "@/lib/api";
 import { login, signup } from "@/features/auth/api";
+import { getAuthSuccessPath } from "@/features/auth/routes";
 import { saveAuthSession } from "@/features/auth/session";
 import type { AuthMode } from "@/features/auth/types";
 import { logger } from "@/lib/logger";
 
 type AuthFormProps = {
   mode: AuthMode;
+  nextPath?: string | null;
 };
 
 type FormStatus = "idle" | "submitting" | "ready" | "error";
@@ -38,7 +41,8 @@ const content = {
   },
 } satisfies Record<AuthMode, Record<string, string>>;
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, nextPath = null }: AuthFormProps) {
+  const router = useRouter();
   const copy = content[mode];
   const [status, setStatus] = useState<FormStatus>("idle");
   const [message, setMessage] = useState<string>(
@@ -78,6 +82,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       });
       setStatus("ready");
       setMessage(copy.successMessage);
+      router.replace(getAuthSuccessPath(mode, nextPath));
     } catch (error) {
       setStatus("error");
       if (error instanceof ApiError) {
