@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { isUnauthenticatedError } from "@/features/auth/errors";
 import { loadCurrentUser, logoutCurrentUser } from "@/features/auth/session-actions";
 import type { AuthUser } from "@/features/auth/types";
-import { ApiError } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/routes";
 
 type ProfileState =
@@ -14,13 +14,6 @@ type ProfileState =
   | { status: "ready"; user: AuthUser }
   | { status: "unauthenticated" }
   | { status: "error"; message: string };
-
-const UNAUTHENTICATED_CODES = new Set([
-  "AUTH_REQUIRED",
-  "INVALID_ACCESS_TOKEN",
-  "INVALID_REFRESH_TOKEN",
-  "REFRESH_TOKEN_REUSED",
-]);
 
 export function ProfileSummary() {
   const router = useRouter();
@@ -152,13 +145,6 @@ export function ProfileSummary() {
         </button>
       </div>
     </section>
-  );
-}
-
-function isUnauthenticatedError(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    (error.problem.status === 401 || UNAUTHENTICATED_CODES.has(error.problem.code))
   );
 }
 
