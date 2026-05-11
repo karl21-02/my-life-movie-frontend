@@ -2,7 +2,7 @@ import { apiClient } from "@/lib/api";
 import type { Movie, MovieSummary } from "@/types/movie";
 
 // TODO: 백엔드 API 연동 시 mock 데이터 제거 후 apiClient 호출로 교체
-const USE_MOCK = process.env.USE_MOCK_MOVIES !== "false";
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_MOVIES !== "false";
 const MOVIES_API_BASE_PATH = "/api/movies";
 
 const mockMovies: Movie[] = [

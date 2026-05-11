@@ -12,11 +12,11 @@ describe("movies API", () => {
   afterEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    delete process.env.USE_MOCK_MOVIES;
+    delete process.env.NEXT_PUBLIC_USE_MOCK_MOVIES;
   });
 
   it("mock 비활성화 시 영화 목록을 BFF 경로로 요청한다", async () => {
-    process.env.USE_MOCK_MOVIES = "false";
+    process.env.NEXT_PUBLIC_USE_MOCK_MOVIES = "false";
     apiClientMock.mockResolvedValue([]);
     const { getMovies } = await import("@/lib/movies");
 
@@ -26,7 +26,7 @@ describe("movies API", () => {
   });
 
   it("mock 비활성화 시 영화 상세/액션 요청도 BFF 경로를 사용한다", async () => {
-    process.env.USE_MOCK_MOVIES = "false";
+    process.env.NEXT_PUBLIC_USE_MOCK_MOVIES = "false";
     apiClientMock.mockResolvedValue({});
     const {
       deleteMovie,
