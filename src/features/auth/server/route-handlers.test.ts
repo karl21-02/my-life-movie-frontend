@@ -32,6 +32,7 @@ describe("auth route handlers", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.SERVER_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it("login은 백엔드 access token을 HttpOnly cookie로 숨기고 body에서 제거한다", async () => {
@@ -181,6 +182,32 @@ describe("auth route handlers", () => {
     expect(response.status).toBe(502);
     expect(body.code).toBe("BACKEND_UNAVAILABLE");
     expect(body.request_id).toBe("req_test");
+  });
+
+  it("SERVER_API_BASE_URL이 없으면 NEXT_PUBLIC_API_BASE_URL이 아닌 서버 fallback을 사용한다", async () => {
+    delete process.env.SERVER_API_BASE_URL;
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://browser-public.local";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(backendAuthResponse), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+    const request = createJsonRequest("/api/auth/login", {
+      email: "user@example.com",
+      password: "password123",
+    });
+
+    await handleAuthApiPost(request, "login");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://localhost:8000/auth/login",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
   });
 });
 

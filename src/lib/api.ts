@@ -179,14 +179,14 @@ function buildRequestUrl(path: string, baseUrl: string): string {
 
 function getDefaultApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    return process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+    // 브라우저 요청은 HttpOnly 쿠키를 처리하는 Next.js Route Handler를 항상 경유한다.
+    return "";
   }
 
-  return (
-    process.env.SERVER_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    SERVER_API_BASE_URL_FALLBACK
-  ).replace(/\/$/, "");
+  return (process.env.SERVER_API_BASE_URL ?? SERVER_API_BASE_URL_FALLBACK).replace(
+    /\/$/,
+    "",
+  );
 }
 
 function serializeRequestBody(body: unknown, headers: Headers): BodyInit {

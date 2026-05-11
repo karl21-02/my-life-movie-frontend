@@ -168,9 +168,8 @@ function problemResponse(
 }
 
 function getServerApiBaseUrl(): string {
-  return (
-    process.env.SERVER_API_BASE_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    SERVER_API_BASE_URL_FALLBACK
-  ).replace(/\/$/, "");
+  return (process.env.SERVER_API_BASE_URL ?? SERVER_API_BASE_URL_FALLBACK).replace(
+    /\/$/,
+    "",
+  );
 }

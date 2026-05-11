@@ -7,6 +7,7 @@ describe("apiClient", () => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     delete process.env.SERVER_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it("JSON 요청에 request id와 same-origin credentials를 기본으로 포함한다", async () => {
@@ -67,6 +68,30 @@ describe("apiClient", () => {
 
     expect(fetchSpy).toHaveBeenCalledWith(
       "/api/auth/signup",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
+
+  it("브라우저 런타임에서는 NEXT_PUBLIC_API_BASE_URL이 있어도 같은 출처 BFF를 호출한다", async () => {
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://localhost:8000";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ movie_id: 1, status: "DRAFT" }), {
+        status: 201,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    await apiClient("/api/movies/draft", {
+      method: "POST",
+      body: { theme_id: 1 },
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/movies/draft",
       expect.objectContaining({
         method: "POST",
       }),

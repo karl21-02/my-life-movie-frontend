@@ -11,6 +11,7 @@ describe("backend API proxy route handlers", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     delete process.env.SERVER_API_BASE_URL;
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
 
   it("GET 요청을 백엔드 API로 프록시한다", async () => {
@@ -86,5 +87,25 @@ describe("backend API proxy route handlers", () => {
       code: "BACKEND_UNAVAILABLE",
       request_id: "req_failed",
     });
+  });
+
+  it("SERVER_API_BASE_URL이 없으면 NEXT_PUBLIC_API_BASE_URL이 아닌 서버 fallback을 사용한다", async () => {
+    delete process.env.SERVER_API_BASE_URL;
+    process.env.NEXT_PUBLIC_API_BASE_URL = "http://browser-public.local";
+    const fetchSpy = vi.fn().mockResolvedValue(Response.json({ ok: true }));
+    vi.stubGlobal("fetch", fetchSpy);
+
+    const request = new NextRequest("http://localhost/api/v1/themes");
+
+    await handleBackendApiRequest(request, {
+      params: Promise.resolve({ path: ["v1", "themes"] }),
+    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://localhost:8000/api/v1/themes",
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
   });
 });
