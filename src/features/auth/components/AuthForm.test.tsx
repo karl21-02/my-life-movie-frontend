@@ -8,6 +8,14 @@ import { login, signup } from "@/features/auth/api";
 import { saveAuthSession } from "@/features/auth/session";
 import type { AuthSessionResponse } from "@/features/auth/types";
 
+const routerReplaceMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: routerReplaceMock,
+  }),
+}));
+
 vi.mock("@/features/auth/api", () => ({
   login: vi.fn(),
   signup: vi.fn(),
@@ -40,9 +48,10 @@ describe("AuthForm", () => {
     loginMock.mockReset();
     signupMock.mockReset();
     saveAuthSessionMock.mockReset();
+    routerReplaceMock.mockReset();
   });
 
-  it("로그인 성공 시 인증 세션을 저장한다", async () => {
+  it("로그인 성공 시 인증 세션을 저장하고 영화 목록으로 이동한다", async () => {
     loginMock.mockResolvedValue(authResponse);
     const user = userEvent.setup();
     render(<AuthForm mode="login" />);
@@ -56,12 +65,13 @@ describe("AuthForm", () => {
       password: "password123",
     });
     expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
+    expect(routerReplaceMock).toHaveBeenCalledWith("/movies");
     expect(
       await screen.findByText("로그인되었습니다. 이제 나의 영화 만들기를 이어갈 수 있습니다."),
     ).toBeInTheDocument();
   });
 
-  it("회원가입 성공 시 display name을 포함해 요청한다", async () => {
+  it("회원가입 성공 시 display name을 포함해 요청하고 영화 생성 화면으로 이동한다", async () => {
     signupMock.mockResolvedValue(authResponse);
     const user = userEvent.setup();
     render(<AuthForm mode="signup" />);
@@ -77,6 +87,19 @@ describe("AuthForm", () => {
       display_name: "테스터",
     });
     expect(saveAuthSessionMock).toHaveBeenCalledWith(authResponse);
+    expect(routerReplaceMock).toHaveBeenCalledWith("/create");
+  });
+
+  it("next query가 안전한 내부 경로이면 로그인 성공 후 해당 경로로 이동한다", async () => {
+    loginMock.mockResolvedValue(authResponse);
+    const user = userEvent.setup();
+    render(<AuthForm mode="login" nextPath="/create?theme_id=1" />);
+
+    await user.type(screen.getByLabelText("이메일"), "user@example.com");
+    await user.type(screen.getByLabelText("비밀번호"), "password123");
+    await user.click(screen.getByRole("button", { name: "로그인" }));
+
+    expect(routerReplaceMock).toHaveBeenCalledWith("/create?theme_id=1");
   });
 
   it("JS 로드 전 기본 제출에서도 비밀번호가 URL query로 노출되지 않도록 post method를 사용한다", () => {
@@ -108,5 +131,6 @@ describe("AuthForm", () => {
       await screen.findByRole("alert"),
     ).toHaveTextContent("이메일 또는 비밀번호가 올바르지 않습니다.");
     expect(saveAuthSessionMock).not.toHaveBeenCalled();
+    expect(routerReplaceMock).not.toHaveBeenCalled();
   });
 });

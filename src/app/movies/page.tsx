@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import MovieCard from "@/components/movie-card";
 import { getMovies } from "@/lib/movies";
+import { APP_ROUTES } from "@/lib/routes";
 
 export const metadata = {
   title: "내 영화 목록 | My Life Movie",
@@ -21,7 +22,7 @@ export default async function MoviesPage() {
           </p>
         </div>
         <Link
-          href="/movies/create"
+          href={APP_ROUTES.createMovie}
           className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300"
         >
           <span aria-hidden="true">{"+"}</span>
@@ -40,7 +41,7 @@ export default async function MoviesPage() {
             {"나의 데이터를 업로드하고 첫 번째 인생 영화를 만들어보세요!"}
           </p>
           <Link
-            href="/movies/create"
+            href={APP_ROUTES.createMovie}
             className="mt-2 rounded-xl bg-amber-400 px-5 py-2 text-sm font-semibold text-zinc-900 transition-colors hover:bg-amber-300"
           >
             {"영화 만들기"}
