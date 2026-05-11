@@ -2,6 +2,7 @@ export const APP_ROUTES = {
   home: "/",
   createMovie: "/create",
   movies: "/movies",
+  profile: "/profile",
   auth: {
     login: "/auth/login",
     signup: "/auth/signup",
