@@ -2,7 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { isUnauthenticatedError } from "@/features/auth/errors";
 import { api, type Theme } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/routes";
+
+const LOGIN_NEXT_CREATE_PATH = `${APP_ROUTES.auth.login}?next=${encodeURIComponent(
+  APP_ROUTES.createMovie,
+)}`;
 
 export default function ThemeGrid({ themes }: { themes: Theme[] }) {
   const router = useRouter();
@@ -13,7 +19,12 @@ export default function ThemeGrid({ themes }: { themes: Theme[] }) {
     try {
       const { movie_id } = await api.movies.createDraft(themeId);
       router.push(`/create/${movie_id}/music?theme_id=${themeId}`);
-    } catch {
+    } catch (error: unknown) {
+      if (isUnauthenticatedError(error)) {
+        router.push(LOGIN_NEXT_CREATE_PATH);
+        return;
+      }
+
       alert("오류가 발생했습니다. 다시 시도해주세요.");
       setLoadingId(null);
     }

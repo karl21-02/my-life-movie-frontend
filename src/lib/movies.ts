@@ -2,7 +2,8 @@ import { apiClient } from "@/lib/api";
 import type { Movie, MovieSummary } from "@/types/movie";
 
 // TODO: 백엔드 API 연동 시 mock 데이터 제거 후 apiClient 호출로 교체
-const USE_MOCK = true;
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK_MOVIES !== "false";
+const MOVIES_API_BASE_PATH = "/api/movies";
 
 const mockMovies: Movie[] = [
   {
@@ -68,7 +69,7 @@ export async function getMovies(): Promise<MovieSummary[]> {
       genre,
     }));
   }
-  return apiClient<MovieSummary[]>("/movies");
+  return apiClient<MovieSummary[]>(MOVIES_API_BASE_PATH);
 }
 
 export async function getMovie(id: number): Promise<Movie> {
@@ -78,7 +79,7 @@ export async function getMovie(id: number): Promise<Movie> {
     if (!movie) throw new Error("Movie not found");
     return movie;
   }
-  return apiClient<Movie>(`/movies/${id}`);
+  return apiClient<Movie>(`${MOVIES_API_BASE_PATH}/${id}`);
 }
 
 export async function deleteMovie(id: number): Promise<void> {
@@ -86,7 +87,7 @@ export async function deleteMovie(id: number): Promise<void> {
     await new Promise((r) => setTimeout(r, 300));
     return;
   }
-  return apiClient<void>(`/movies/${id}`, { method: "DELETE" });
+  return apiClient<void>(`${MOVIES_API_BASE_PATH}/${id}`, { method: "DELETE" });
 }
 
 export async function downloadMovie(id: number): Promise<{ message: string }> {
@@ -94,7 +95,7 @@ export async function downloadMovie(id: number): Promise<{ message: string }> {
     await new Promise((r) => setTimeout(r, 300));
     return { message: "다운로드가 준비되었습니다." };
   }
-  return apiClient<{ message: string }>(`/movies/${id}/download`);
+  return apiClient<{ message: string }>(`${MOVIES_API_BASE_PATH}/${id}/download`);
 }
 
 export async function shareMovie(id: number): Promise<{ share_url: string; message: string }> {
@@ -103,7 +104,7 @@ export async function shareMovie(id: number): Promise<{ share_url: string; messa
     const share_url = `${window.location.origin}/movies/${id}`;
     return { share_url, message: "공유 링크가 생성되었습니다." };
   }
-  return apiClient<{ share_url: string; message: string }>(`/movies/${id}/share`, {
+  return apiClient<{ share_url: string; message: string }>(`${MOVIES_API_BASE_PATH}/${id}/share`, {
     method: "POST",
   });
 }
