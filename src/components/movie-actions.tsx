@@ -46,19 +46,27 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
 
   return (
     <>
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={handleDownload}
           disabled={isDownloading}
-          className="flex-1 rounded-xl bg-zinc-700 px-5 py-2.5 text-sm font-semibold text-zinc-100 transition-colors hover:bg-zinc-600 disabled:opacity-50 sm:flex-none"
+          className="rounded-xl px-4 py-2 text-sm font-semibold text-amber-300 transition-all hover:scale-105 disabled:opacity-50"
+          style={{
+            background: "rgba(251,191,36,0.1)",
+            border: "1px solid rgba(251,191,36,0.25)",
+          }}
         >
           {isDownloading ? "저장 중…" : "⬇ 다운로드"}
         </button>
         <button
           type="button"
           onClick={() => setShowConfirm(true)}
-          className="flex-1 rounded-xl bg-red-900/60 px-5 py-2.5 text-sm font-semibold text-red-300 transition-colors hover:bg-red-800 sm:flex-none"
+          className="rounded-xl px-4 py-2 text-sm font-semibold text-red-400 transition-all hover:scale-105"
+          style={{
+            background: "rgba(239,68,68,0.1)",
+            border: "1px solid rgba(239,68,68,0.2)",
+          }}
         >
           삭제
         </button>
@@ -66,8 +74,15 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
 
       {/* 삭제 확인 다이얼로그 */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-sm rounded-2xl bg-zinc-800 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md">
+          <div
+            className="mx-4 w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+            style={{
+              background: "linear-gradient(145deg, rgba(20,35,60,0.98), rgba(13,27,42,0.98))",
+              border: "1px solid rgba(251,191,36,0.2)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(251,191,36,0.05)",
+            }}
+          >
             <h2 className="text-base font-semibold text-zinc-50">영화를 삭제할까요?</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">
               <span className="font-medium text-zinc-200">{movieTitle}</span>을(를) 삭제하면
@@ -78,7 +93,8 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
                 type="button"
                 onClick={() => setShowConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 rounded-lg border border-zinc-600 px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700 disabled:opacity-50"
+                className="flex-1 rounded-xl py-2 text-sm font-medium text-zinc-300 transition-all hover:text-zinc-100 disabled:opacity-50"
+                style={{ border: "1px solid rgba(255,255,255,0.12)" }}
               >
                 취소
               </button>
@@ -86,7 +102,7 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+                className="flex-1 rounded-xl bg-red-600 py-2 text-sm font-medium text-white transition-colors hover:bg-red-500 disabled:opacity-50"
               >
                 {isDeleting ? "삭제 중…" : "삭제"}
               </button>
