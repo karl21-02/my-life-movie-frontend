@@ -26,7 +26,6 @@ export default async function MusicPage({ params, searchParams }: Props) {
       <p className="text-sm text-zinc-400 mb-8">영화의 분위기를 완성할 배경 음악을 골라보세요.</p>
       <MusicPanel
         movieId={movieId_num}
-        themeId={themeId}
         defaultTracks={musicList.default_tracks}
       />
     </main>

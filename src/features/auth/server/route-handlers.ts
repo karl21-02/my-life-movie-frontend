@@ -10,6 +10,8 @@ import { logger } from "@/lib/logger";
 
 const ACCESS_TOKEN_COOKIE_NAME = "my_life_movie.access_token";
 const ACCESS_TOKEN_COOKIE_PATH = "/";
+const BACKEND_REFRESH_COOKIE_PATH = "/auth";
+const FRONTEND_REFRESH_COOKIE_PATH = "/api/auth";
 const SERVER_API_BASE_URL_FALLBACK = "http://localhost:8000";
 
 const BACKEND_POST_PATHS = {
@@ -222,8 +224,19 @@ function forwardResponseMetadata(
   );
 
   for (const cookie of getSetCookieHeaders(backendResponse.headers)) {
-    response.headers.append("Set-Cookie", cookie);
+    response.headers.append("Set-Cookie", rewriteRefreshCookiePath(cookie));
   }
+}
+
+function rewriteRefreshCookiePath(cookie: string): string {
+  if (!cookie.startsWith("refresh_token=")) {
+    return cookie;
+  }
+
+  return cookie.replace(
+    new RegExp(`Path=${BACKEND_REFRESH_COOKIE_PATH}(?=;|$)`, "i"),
+    `Path=${FRONTEND_REFRESH_COOKIE_PATH}`,
+  );
 }
 
 function getSetCookieHeaders(headers: Headers): string[] {

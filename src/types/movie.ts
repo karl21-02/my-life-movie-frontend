@@ -14,11 +14,17 @@ export type Movie = {
   id: number;
   title: string;
   description: string;
-  thumbnail: string;
+  thumbnail?: string;
   genre: string;
   sentiment: string;
+  status: string;
+  outputUrl?: string;
+  thumbnailUrl?: string;
   ost: OstTrack[];
   similarMovies: SimilarMovie[];
 };
 
-export type MovieSummary = Pick<Movie, "id" | "title" | "thumbnail" | "genre">;
+export type MovieSummary = Pick<
+  Movie,
+  "id" | "title" | "thumbnail" | "genre" | "status" | "outputUrl" | "thumbnailUrl"
+>;

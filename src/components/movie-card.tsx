@@ -52,7 +52,10 @@ export default function MovieCard({ movie }: Props) {
     setIsDownloading(true);
     logger.info("movie_download_clicked", { movie_id: movie.id });
     try {
-      await downloadMovie(movie.id);
+      const result = await downloadMovie(movie.id);
+      if (result.output_url) {
+        window.location.href = result.output_url;
+      }
       logger.info("movie_download_succeeded", { movie_id: movie.id });
       showToast("다운로드가 준비되었습니다.");
     } catch {
@@ -94,13 +97,22 @@ export default function MovieCard({ movie }: Props) {
           className="relative block aspect-[2/3] w-full overflow-hidden"
           style={{ backgroundColor: "#0d1b2a" }}
         >
-          <Image
-            src={movie.thumbnail}
-            alt={movie.title}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          {movie.thumbnail ? (
+            <Image
+              src={movie.thumbnail}
+              alt={movie.title}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center bg-zinc-950 px-4 text-center">
+              <span className="text-3xl text-amber-300" aria-hidden="true">▶</span>
+              <span className="mt-3 text-xs font-medium leading-5 text-zinc-500">
+                생성된 영화 미리보기 준비 중
+              </span>
+            </div>
+          )}
           {/* 장르 뱃지 */}
           <span
             className="absolute left-2 top-2 rounded-full px-2.5 py-0.5 text-xs font-bold text-zinc-900 tracking-wide"
@@ -110,6 +122,15 @@ export default function MovieCard({ movie }: Props) {
             }}
           >
             {movie.genre}
+          </span>
+          <span
+            className="absolute bottom-2 left-2 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-zinc-200"
+            style={{
+              background: "rgba(0,0,0,0.58)",
+              border: "1px solid rgba(255,255,255,0.14)",
+            }}
+          >
+            {formatMovieStatus(movie.status)}
           </span>
           {/* 호버 그라디언트 */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -218,4 +239,17 @@ export default function MovieCard({ movie }: Props) {
       )}
     </>
   );
+}
+
+function formatMovieStatus(status: string): string {
+  switch (status) {
+    case "COMPLETED":
+      return "완성";
+    case "GENERATING":
+      return "생성 중";
+    case "FAILED":
+      return "실패";
+    default:
+      return "초안";
+  }
 }

@@ -190,6 +190,165 @@ describe("apiClient", () => {
     });
   });
 
+  it("일반 API가 인증 만료 응답을 받으면 refresh 후 한 번 재시도한다", async () => {
+    const authRequiredProblem: ProblemDetails = {
+      type: "auth_required",
+      title: "Auth Required",
+      status: 401,
+      detail: "Bearer access token이 필요합니다.",
+      instance: "/api/movies/3/chat",
+      code: "AUTH_REQUIRED",
+      request_id: "req_chat",
+      errors: [],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(authRequiredProblem), {
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ expires_in: 900 }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ai_question: "더 들려주세요." }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      );
+
+    const response = await apiClient<{ ai_question: string }>("/api/movies/3/chat", {
+      method: "POST",
+      body: { message: "졸업식 이야기" },
+      requestId: "req_chat",
+    });
+
+    expect(response.ai_question).toBe("더 들려주세요.");
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/auth/refresh",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "same-origin",
+      }),
+    );
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      3,
+      "/api/movies/3/chat",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
+  });
+
+  it("기본 refresh가 실패하면 legacy refresh 경로로 복구 후 재시도한다", async () => {
+    const authRequiredProblem: ProblemDetails = {
+      type: "auth_required",
+      title: "Auth Required",
+      status: 401,
+      detail: "Bearer access token이 필요합니다.",
+      instance: "/api/movies/3/chat",
+      code: "AUTH_REQUIRED",
+      request_id: "req_chat",
+      errors: [],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(authRequiredProblem), {
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(authRequiredProblem), {
+          status: 401,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ expires_in: 900 }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ai_question: "더 들려주세요." }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }),
+      );
+
+    const response = await apiClient<{ ai_question: string }>("/api/movies/3/chat", {
+      method: "POST",
+      body: { message: "졸업식 이야기" },
+      requestId: "req_chat",
+    });
+
+    expect(response.ai_question).toBe("더 들려주세요.");
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "/api/auth/refresh",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      3,
+      "/auth/refresh",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      4,
+      "/api/movies/3/chat",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("인증 API 자체의 401은 refresh 재시도를 하지 않는다", async () => {
+    const authRequiredProblem: ProblemDetails = {
+      type: "auth_required",
+      title: "Auth Required",
+      status: 401,
+      detail: "refresh token이 필요합니다.",
+      instance: "/api/auth/refresh",
+      code: "AUTH_REQUIRED",
+      request_id: "req_refresh",
+      errors: [],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(authRequiredProblem), {
+        status: 401,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    await expect(apiClient("/api/auth/refresh", {
+      method: "POST",
+      requestId: "req_refresh",
+    })).rejects.toMatchObject<ApiError>({
+      problem: authRequiredProblem,
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("네트워크 실패를 ApiError로 변환한다", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
 

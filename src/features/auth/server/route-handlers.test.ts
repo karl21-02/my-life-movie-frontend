@@ -76,6 +76,7 @@ describe("auth route handlers", () => {
     expect(response.headers.get("set-cookie")).toContain(
       "refresh_token=refresh",
     );
+    expect(response.headers.get("set-cookie")).toContain("Path=/api/auth");
     expect(response.headers.get("set-cookie")).toContain("HttpOnly");
   });
 
@@ -104,6 +105,7 @@ describe("auth route handlers", () => {
     expect(response.headers.get("set-cookie")).toContain(
       "refresh_token=rotated-refresh",
     );
+    expect(response.headers.get("set-cookie")).toContain("Path=/api/auth");
   });
 
   it("logout은 access cookie와 refresh cookie를 함께 삭제한다", async () => {
@@ -126,6 +128,7 @@ describe("auth route handlers", () => {
     expect(setCookieHeader).toContain("my_life_movie.access_token=");
     expect(setCookieHeader).toContain("refresh_token=");
     expect(setCookieHeader).toContain("Max-Age=0");
+    expect(setCookieHeader).toContain("Path=/api/auth");
   });
 
   it("me는 HttpOnly access cookie를 Bearer header로 백엔드에 전달한다", async () => {

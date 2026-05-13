@@ -21,7 +21,13 @@ export type ApiClientOptions = Omit<RequestInit, "body"> & {
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const BODYLESS_METHODS = new Set(["GET", "HEAD"]);
+const REFRESHABLE_AUTH_ERROR_CODES = new Set([
+  "AUTH_REQUIRED",
+  "INVALID_ACCESS_TOKEN",
+]);
 const SERVER_API_BASE_URL_FALLBACK = "http://localhost:8000";
+
+let refreshAccessTokenPromise: Promise<boolean> | null = null;
 
 function isJsonResponse(response: Response): boolean {
   return response.headers.get("content-type")?.includes("application/json") ?? false;
@@ -83,6 +89,7 @@ export async function apiClient<T>(
   const hasBody = body !== undefined;
   const serializedBody = hasBody ? serializeRequestBody(body, headers) : undefined;
   if (hasBody && isBodylessMethod(fetchOptions.method)) {
+    clearTimeout(timeout);
     throw new ApiError({
       type: "invalid_request_body",
       title: "Invalid Request Body",
@@ -105,35 +112,43 @@ export async function apiClient<T>(
     method: fetchOptions.method ?? "GET",
   });
 
-  let response: Response;
-  try {
-    response = await fetch(buildRequestUrl(path, baseUrl), {
-      ...fetchOptions,
-      headers,
-      credentials: fetchOptions.credentials ?? "same-origin",
-      body: serializedBody,
-      signal: signal ?? abortController.signal,
-    });
-  } catch (error) {
-    throw normalizeNetworkError(error, path, requestId, didTimeout);
-  } finally {
-    clearTimeout(timeout);
-  }
+  let response = await fetchApiRequest({
+    path,
+    baseUrl,
+    fetchOptions,
+    headers,
+    body: serializedBody,
+    signal: signal ?? abortController.signal,
+    requestId,
+    didTimeout: () => didTimeout,
+  });
 
   if (!response.ok) {
-    const body = isJsonResponse(response) ? await response.json() : undefined;
-    const problem = isProblemDetails(body)
-      ? body
-      : {
-          type: "http_error",
-          title: "HTTP Error",
-          status: response.status,
-          detail: response.statusText || "Request failed.",
-          instance: path,
-          code: "HTTP_ERROR",
-          request_id: response.headers.get(REQUEST_ID_HEADER) ?? requestId,
-          errors: [],
-        };
+    let problem = await readProblemDetails(response, path, requestId);
+    if (shouldRefreshAndRetry(path, problem)) {
+      const refreshed = await refreshAccessTokenOnce();
+      if (refreshed) {
+        response = await fetchApiRequest({
+          path,
+          baseUrl,
+          fetchOptions,
+          headers,
+          body: serializedBody,
+          signal: signal ?? abortController.signal,
+          requestId,
+          didTimeout: () => didTimeout,
+        });
+        if (response.ok) {
+          clearTimeout(timeout);
+          return readSuccessfulResponse<T>(response, {
+            requestId,
+            path,
+            method: fetchOptions.method ?? "GET",
+          });
+        }
+        problem = await readProblemDetails(response, path, requestId);
+      }
+    }
 
     logger.warn("api_request_failed", {
       request_id: problem.request_id,
@@ -143,13 +158,119 @@ export async function apiClient<T>(
       error_code: problem.code,
     });
 
+    clearTimeout(timeout);
     throw new ApiError(problem);
   }
 
-  logger.debug("api_request_succeeded", {
-    request_id: response.headers.get(REQUEST_ID_HEADER) ?? requestId,
+  clearTimeout(timeout);
+  return readSuccessfulResponse<T>(response, {
+    requestId,
     path,
     method: fetchOptions.method ?? "GET",
+  });
+}
+
+async function fetchApiRequest({
+  path,
+  baseUrl,
+  fetchOptions,
+  headers,
+  body,
+  signal,
+  requestId,
+  didTimeout,
+}: {
+  path: string;
+  baseUrl: string;
+  fetchOptions: Omit<RequestInit, "body" | "headers" | "signal">;
+  headers: Headers;
+  body: BodyInit | undefined;
+  signal: AbortSignal;
+  requestId: string;
+  didTimeout: () => boolean;
+}): Promise<Response> {
+  try {
+    return await fetch(buildRequestUrl(path, baseUrl), {
+      ...fetchOptions,
+      headers,
+      credentials: fetchOptions.credentials ?? "same-origin",
+      body,
+      signal,
+    });
+  } catch (error) {
+    throw normalizeNetworkError(error, path, requestId, didTimeout());
+  }
+}
+
+async function readProblemDetails(
+  response: Response,
+  path: string,
+  requestId: string,
+): Promise<ProblemDetails> {
+  const body = isJsonResponse(response) ? await response.json() : undefined;
+  return isProblemDetails(body)
+    ? body
+    : {
+        type: "http_error",
+        title: "HTTP Error",
+        status: response.status,
+        detail: response.statusText || "Request failed.",
+        instance: path,
+        code: "HTTP_ERROR",
+        request_id: response.headers.get(REQUEST_ID_HEADER) ?? requestId,
+        errors: [],
+      };
+}
+
+function shouldRefreshAndRetry(path: string, problem: ProblemDetails): boolean {
+  return (
+    typeof window !== "undefined" &&
+    path.startsWith("/api/") &&
+    !path.startsWith("/api/auth/") &&
+    REFRESHABLE_AUTH_ERROR_CODES.has(problem.code)
+  );
+}
+
+async function refreshAccessTokenOnce(): Promise<boolean> {
+  refreshAccessTokenPromise ??= tryRefreshAccessToken()
+    .catch(() => false)
+    .finally(() => {
+      refreshAccessTokenPromise = null;
+    });
+
+  return refreshAccessTokenPromise;
+}
+
+async function tryRefreshAccessToken(): Promise<boolean> {
+  const primaryResponse = await fetch("/api/auth/refresh", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  if (primaryResponse.ok) {
+    return true;
+  }
+
+  const legacyResponse = await fetch("/auth/refresh", {
+    method: "POST",
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  return legacyResponse.ok;
+}
+
+async function readSuccessfulResponse<T>(
+  response: Response,
+  context: {
+    requestId: string;
+    path: string;
+    method: string;
+  },
+): Promise<T> {
+  logger.debug("api_request_succeeded", {
+    request_id: response.headers.get(REQUEST_ID_HEADER) ?? context.requestId,
+    path: context.path,
+    method: context.method,
     status_code: response.status,
   });
 
@@ -260,11 +381,23 @@ export interface MusicTrack {
   title: string;
   file_url: string;
   is_ai_recommended: boolean;
+  artist?: string | null;
+  provider?: string;
+  provider_track_id?: string | null;
+  external_url?: string | null;
 }
 
 export interface MusicListResponse {
   default_tracks: MusicTrack[];
   ai_recommended: MusicTrack[];
+}
+
+export interface MusicRecommendPayload {
+  message: string;
+  mood?: string;
+  scene?: string;
+  story_hint?: string;
+  avoid?: string;
 }
 
 export interface ChatMessage {
@@ -296,10 +429,10 @@ export const api = {
   music: {
     listByTheme: (themeId: number) =>
       apiClient<MusicListResponse>(`/api/v1/music?theme_id=${themeId}`),
-    recommend: (movieId: number, message: string) =>
+    recommend: (movieId: number, payload: MusicRecommendPayload) =>
       apiClient<{ ai_message: string; tracks: MusicTrack[] }>(
         "/api/v1/music/recommend",
-        { method: "POST", body: { movie_id: movieId, message } },
+        { method: "POST", body: { movie_id: movieId, ...payload } },
       ),
   },
 

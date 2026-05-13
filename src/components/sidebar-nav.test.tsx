@@ -17,7 +17,7 @@ describe("SidebarNav", () => {
   it("프로필 메뉴를 /profile 라우트로 연결한다", () => {
     render(<SidebarNav />);
 
-    expect(screen.getByRole("link", { name: "프로필" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /프로필/ })).toHaveAttribute(
       "href",
       "/profile",
     );
@@ -26,7 +26,7 @@ describe("SidebarNav", () => {
   it("영화 생성 메뉴를 실제 생성 시작 라우트로 연결한다", () => {
     render(<SidebarNav />);
 
-    expect(screen.getByRole("link", { name: "영화 생성" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /영화 생성/ })).toHaveAttribute(
       "href",
       "/create",
     );
@@ -37,7 +37,7 @@ describe("SidebarNav", () => {
 
     render(<SidebarNav />);
 
-    expect(screen.getByRole("link", { name: "프로필" })).toHaveClass(
+    expect(screen.getByRole("link", { name: /프로필/ })).toHaveClass(
       "text-amber-400",
     );
   });

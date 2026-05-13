@@ -21,7 +21,10 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
     setIsDownloading(true);
     logger.info("movie_download_clicked", { movie_id: movieId });
     try {
-      await downloadMovie(movieId);
+      const result = await downloadMovie(movieId);
+      if (result.output_url) {
+        window.location.href = result.output_url;
+      }
       logger.info("movie_download_succeeded", { movie_id: movieId });
     } catch {
       logger.error("movie_download_failed", { movie_id: movieId });
