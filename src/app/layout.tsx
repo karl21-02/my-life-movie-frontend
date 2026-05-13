@@ -17,12 +17,15 @@ export default function RootLayout({
     <html lang="ko" className="h-full antialiased">
       <head>
         {adsenseClient ? (
-          <script
-            id="google-adsense"
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
-            crossOrigin="anonymous"
-          />
+          <>
+            <meta name="google-adsense-account" content={adsenseClient} />
+            <script
+              id="google-adsense"
+              async
+              src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
+              crossOrigin="anonymous"
+            />
+          </>
         ) : null}
       </head>
       <body className="min-h-full flex flex-col">
