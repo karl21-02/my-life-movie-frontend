@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api";
-import type { Movie, MovieSummary, OstTrack, SimilarMovie } from "@/types/movie";
+import type { GenerationStatus, Movie, MovieSummary, OstTrack, SimilarMovie } from "@/types/movie";
 
 const MOVIES_API_BASE_PATH = "/api/movies";
 
@@ -40,6 +40,17 @@ type DownloadMovieResponse = {
   download_url?: string | null;
 };
 
+type ApiGenerationStatus = {
+  movie_id: number;
+  job_id: number;
+  status: string;
+  progress: number;
+  output_url?: string | null;
+  thumbnail_url?: string | null;
+  error_code?: string | null;
+  error_message?: string | null;
+};
+
 export async function getMovies(): Promise<MovieSummary[]> {
   const movies = await apiClient<ApiMovieSummary[]>(MOVIES_API_BASE_PATH, {
     baseUrl: "",
@@ -59,6 +70,22 @@ export async function deleteMovie(id: number): Promise<void> {
     baseUrl: "",
     method: "DELETE",
   });
+}
+
+export async function getGenerationStatus(id: number): Promise<GenerationStatus> {
+  const generation = await apiClient<ApiGenerationStatus>(`${MOVIES_API_BASE_PATH}/${id}/generation`, {
+    baseUrl: "",
+  });
+  return {
+    movieId: generation.movie_id,
+    jobId: generation.job_id,
+    status: generation.status,
+    progress: generation.progress,
+    outputUrl: normalizeOptionalUrl(generation.output_url),
+    thumbnailUrl: normalizeOptionalUrl(generation.thumbnail_url),
+    errorCode: generation.error_code ?? undefined,
+    errorMessage: generation.error_message ?? undefined,
+  };
 }
 
 export async function downloadMovie(id: number): Promise<DownloadMovieResponse> {

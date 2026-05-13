@@ -7,9 +7,11 @@ import type { ReactNode } from "react";
 
 import MovieActions from "@/components/movie-actions";
 import { isUnauthenticatedError } from "@/features/auth/errors";
-import { getMovie } from "@/lib/movies";
+import { getGenerationStatus, getMovie } from "@/lib/movies";
 import { APP_ROUTES } from "@/lib/routes";
-import type { Movie, SimilarMovie } from "@/types/movie";
+import type { GenerationStatus, Movie, SimilarMovie } from "@/types/movie";
+
+const GENERATION_POLL_INTERVAL_MS = 5000;
 
 type MovieDetailState =
   | { status: "loading" }
@@ -20,17 +22,21 @@ type MovieDetailState =
 
 export function MovieDetailClient({ movieId }: { movieId: number }) {
   const [state, setState] = useState<MovieDetailState>({ status: "loading" });
+  const [generation, setGeneration] = useState<GenerationStatus | null>(null);
 
   useEffect(() => {
     let ignore = false;
 
-    getMovie(movieId)
-      .then((movie) => {
+    async function loadMovie() {
+      try {
+        const movie = await getMovie(movieId);
         if (!ignore) {
           setState({ status: "ready", movie });
+          if (shouldFetchGenerationStatus(movie.status)) {
+            loadGenerationStatus();
+          }
         }
-      })
-      .catch((error: unknown) => {
+      } catch (error) {
         if (ignore) {
           return;
         }
@@ -46,12 +52,64 @@ export function MovieDetailClient({ movieId }: { movieId: number }) {
         }
 
         setState({ status: "error" });
-      });
+      }
+    }
+
+    async function loadGenerationStatus() {
+      try {
+        const nextGeneration = await getGenerationStatus(movieId);
+        if (!ignore) {
+          setGeneration(nextGeneration);
+        }
+      } catch {
+        if (!ignore) {
+          setGeneration(null);
+        }
+      }
+    }
+
+    loadMovie();
 
     return () => {
       ignore = true;
     };
   }, [movieId]);
+
+  useEffect(() => {
+    if (state.status !== "ready" || !isGenerationInProgress(state.movie.status)) {
+      return;
+    }
+
+    let ignore = false;
+
+    async function pollGeneration() {
+      try {
+        const nextGeneration = await getGenerationStatus(movieId);
+        if (ignore) {
+          return;
+        }
+
+        setGeneration(nextGeneration);
+
+        if (isTerminalGenerationStatus(nextGeneration.status)) {
+          const nextMovie = await getMovie(movieId);
+          if (!ignore) {
+            setState({ status: "ready", movie: nextMovie });
+          }
+        }
+      } catch {
+        // 상태 폴링 실패는 다음 주기에서 다시 시도합니다.
+      }
+    }
+
+    pollGeneration();
+    const intervalId = window.setInterval(pollGeneration, GENERATION_POLL_INTERVAL_MS);
+
+    return () => {
+      ignore = true;
+      window.clearInterval(intervalId);
+    };
+  }, [movieId, state]);
 
   if (state.status === "loading") {
     return <StateView title="영화 정보를 불러오는 중입니다." />;
@@ -90,10 +148,16 @@ export function MovieDetailClient({ movieId }: { movieId: number }) {
     );
   }
 
-  return <MovieDetail movie={state.movie} />;
+  return <MovieDetail movie={state.movie} generation={generation} />;
 }
 
-function MovieDetail({ movie }: { movie: Movie }) {
+function MovieDetail({
+  movie,
+  generation,
+}: {
+  movie: Movie;
+  generation: GenerationStatus | null;
+}) {
   return (
     <div className="flex flex-col min-h-full">
       <div
@@ -115,8 +179,8 @@ function MovieDetail({ movie }: { movie: Movie }) {
 
       <div className="flex-1 px-8 py-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(280px,520px)_1fr]">
-          <MoviePreview movie={movie} />
-          <MovieInfo movie={movie} />
+          <MoviePreview movie={movie} generation={generation} />
+          <MovieInfo movie={movie} generation={generation} />
         </div>
 
         {movie.similarMovies.length > 0 && (
@@ -207,7 +271,35 @@ function SimilarMovieCard({ movie }: { movie: SimilarMovie }) {
   );
 }
 
-function MoviePreview({ movie }: { movie: Movie }) {
+function MoviePreview({
+  movie,
+  generation,
+}: {
+  movie: Movie;
+  generation: GenerationStatus | null;
+}) {
+  if (isGenerationInProgress(generation?.status ?? movie.status)) {
+    return (
+      <GenerationStatePanel
+        title="영상을 생성하고 있습니다"
+        description="AI가 스토리와 장면 구성을 바탕으로 영상을 만들고 있습니다."
+        progress={generation?.progress ?? 1}
+        tone="progress"
+      />
+    );
+  }
+
+  if (isGenerationFailed(generation?.status ?? movie.status)) {
+    return (
+      <GenerationStatePanel
+        title="영상 생성에 실패했습니다"
+        description={formatGenerationError(generation)}
+        progress={generation?.progress ?? 0}
+        tone="failed"
+      />
+    );
+  }
+
   if (movie.outputUrl) {
     return (
       <div className="w-full">
@@ -251,7 +343,15 @@ function MoviePreview({ movie }: { movie: Movie }) {
   );
 }
 
-function MovieInfo({ movie }: { movie: Movie }) {
+function MovieInfo({
+  movie,
+  generation,
+}: {
+  movie: Movie;
+  generation: GenerationStatus | null;
+}) {
+  const displayedStatus = generation?.status ?? movie.status;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap gap-2">
@@ -280,9 +380,41 @@ function MovieInfo({ movie }: { movie: Movie }) {
             border: "1px solid rgba(255,255,255,0.1)",
           }}
         >
-          {formatMovieStatus(movie.status)}
+          {formatMovieStatus(displayedStatus)}
         </span>
+        {isGenerationInProgress(displayedStatus) && (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold text-amber-200"
+            style={{
+              background: "rgba(251,191,36,0.10)",
+              border: "1px solid rgba(251,191,36,0.24)",
+            }}
+          >
+            {generation?.progress ?? 1}%
+          </span>
+        )}
+        {isGenerationFailed(displayedStatus) && generation?.errorCode && (
+          <span
+            className="rounded-full px-3 py-1 text-xs font-semibold text-red-200"
+            style={{
+              background: "rgba(239,68,68,0.12)",
+              border: "1px solid rgba(239,68,68,0.24)",
+            }}
+          >
+            {formatGenerationErrorCode(generation.errorCode)}
+          </span>
+        )}
       </div>
+
+      {(isGenerationInProgress(displayedStatus) || isGenerationFailed(displayedStatus)) && (
+        <InfoSection title="생성 상태">
+          <p className="text-sm leading-7 text-zinc-300">
+            {isGenerationFailed(displayedStatus)
+              ? formatGenerationError(generation)
+              : `현재 ${generation?.progress ?? 1}% 진행 중입니다. 완료되면 이 화면에 자동 반영됩니다.`}
+          </p>
+        </InfoSection>
+      )}
 
       <InfoSection title="줄거리">
         <p className="text-sm leading-7 text-zinc-300">{movie.description}</p>
@@ -380,13 +512,103 @@ function StateView({
 function formatMovieStatus(status: string): string {
   switch (status) {
     case "COMPLETED":
+    case "SUCCEEDED":
       return "완성";
     case "GENERATING":
+    case "QUEUED":
+    case "RUNNING":
       return "생성 중";
     case "FAILED":
       return "실패";
+    case "CANCELED":
+      return "취소";
     default:
       return "초안";
+  }
+}
+
+function GenerationStatePanel({
+  title,
+  description,
+  progress,
+  tone,
+}: {
+  title: string;
+  description: string;
+  progress: number;
+  tone: "progress" | "failed";
+}) {
+  const normalizedProgress = Math.max(0, Math.min(100, progress));
+  const isFailed = tone === "failed";
+
+  return (
+    <div
+      className="flex aspect-video w-full flex-col justify-center rounded-xl bg-zinc-950 p-8"
+      style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className={`text-sm font-bold ${isFailed ? "text-red-300" : "text-amber-300"}`}>
+            {title}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">{description}</p>
+        </div>
+        {!isFailed && (
+          <span className="shrink-0 text-2xl font-bold text-amber-300">
+            {normalizedProgress}%
+          </span>
+        )}
+      </div>
+      <div className="mt-6 h-2 overflow-hidden rounded-full bg-zinc-800">
+        <div
+          className={`h-full rounded-full ${isFailed ? "bg-red-500" : "bg-amber-400"}`}
+          style={{ width: `${isFailed ? 100 : normalizedProgress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function shouldFetchGenerationStatus(status: string): boolean {
+  return isGenerationInProgress(status) || isGenerationFailed(status);
+}
+
+function isGenerationInProgress(status: string): boolean {
+  return status === "GENERATING" || status === "QUEUED" || status === "RUNNING";
+}
+
+function isGenerationFailed(status: string): boolean {
+  return status === "FAILED";
+}
+
+function isTerminalGenerationStatus(status: string): boolean {
+  return status === "SUCCEEDED" || status === "FAILED" || status === "CANCELED";
+}
+
+function formatGenerationError(generation: GenerationStatus | null): string {
+  if (!generation?.errorCode && !generation?.errorMessage) {
+    return "영상 생성 중 오류가 발생했습니다. 입력 내용을 조정한 뒤 다시 생성해주세요.";
+  }
+
+  if (generation.errorCode === "PROVIDER_MODERATION_BLOCKED") {
+    return "영상 provider의 안전성 검토에서 차단되었습니다. 인물/상황 표현을 더 일반적이고 안전하게 바꾼 뒤 다시 생성해주세요.";
+  }
+
+  if (generation.errorCode === "PROVIDER_TIMEOUT") {
+    return "영상 provider 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.";
+  }
+
+  return generation.errorMessage ?? "영상 생성 중 오류가 발생했습니다.";
+}
+
+function formatGenerationErrorCode(errorCode: string): string {
+  switch (errorCode) {
+    case "PROVIDER_MODERATION_BLOCKED":
+      return "안전성 차단";
+    case "PROVIDER_TIMEOUT":
+      return "시간 초과";
+    default:
+      return "provider 오류";
   }
 }
 

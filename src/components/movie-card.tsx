@@ -16,9 +16,10 @@ import type { MovieSummary } from "@/types/movie";
 
 type Props = {
   movie: MovieSummary;
+  onDeleted?: (movieId: number) => void;
 };
 
-export default function MovieCard({ movie }: Props) {
+export default function MovieCard({ movie, onDeleted }: Props) {
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -77,6 +78,7 @@ export default function MovieCard({ movie }: Props) {
       await deleteMovie(movie.id);
       logger.info("movie_delete_succeeded", { movie_id: movie.id });
       setShowConfirm(false);
+      onDeleted?.(movie.id);
       router.refresh();
     } catch {
       logger.error("movie_delete_failed", { movie_id: movie.id });
