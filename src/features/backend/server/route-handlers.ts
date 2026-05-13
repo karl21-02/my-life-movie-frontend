@@ -27,6 +27,9 @@ const HOP_BY_HOP_REQUEST_HEADERS = new Set([
 ]);
 
 const RESPONSE_HEADERS_TO_FORWARD = new Set([
+  "cache-control",
+  "content-disposition",
+  "content-length",
   "content-type",
   "set-cookie",
   REQUEST_ID_HEADER.toLowerCase(),

@@ -130,10 +130,9 @@ function MovieDetail({ movie }: { movie: Movie }) {
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {movie.similarMovies.map((similar) => (
-                <Link
+                <article
                   key={similar.id}
-                  href={`/movies/${similar.id}`}
-                  className="group flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1.5"
+                  className="group flex flex-col overflow-hidden rounded-xl"
                   style={{
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
@@ -152,7 +151,7 @@ function MovieDetail({ movie }: { movie: Movie }) {
                   <p className="line-clamp-2 p-3 text-xs font-medium leading-snug text-zinc-300 transition-colors group-hover:text-amber-400">
                     {similar.title}
                   </p>
-                </Link>
+                </article>
               ))}
             </div>
           </div>

@@ -35,6 +35,7 @@ type ApiMovie = ApiMovieSummary & {
 type DownloadMovieResponse = {
   message: string;
   output_url?: string | null;
+  download_url?: string | null;
 };
 
 export async function getMovies(): Promise<MovieSummary[]> {
@@ -62,6 +63,10 @@ export async function downloadMovie(id: number): Promise<DownloadMovieResponse> 
   return apiClient<DownloadMovieResponse>(`${MOVIES_API_BASE_PATH}/${id}/download`, {
     baseUrl: "",
   });
+}
+
+export function getMovieDownloadFileUrl(id: number, downloadUrl?: string | null): string {
+  return normalizeOptionalUrl(downloadUrl) ?? `${MOVIES_API_BASE_PATH}/${id}/download/file`;
 }
 
 export async function shareMovie(id: number): Promise<{ share_url: string; message: string }> {

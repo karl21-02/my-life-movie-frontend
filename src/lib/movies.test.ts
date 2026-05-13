@@ -28,6 +28,7 @@ describe("movies API", () => {
     const {
       deleteMovie,
       downloadMovie,
+      getMovieDownloadFileUrl,
       getMovie,
       shareMovie,
     } = await import("@/lib/movies");
@@ -51,6 +52,10 @@ describe("movies API", () => {
       baseUrl: "",
       method: "POST",
     });
+    expect(getMovieDownloadFileUrl(1, "/api/movies/1/download/file")).toBe(
+      "/api/movies/1/download/file",
+    );
+    expect(getMovieDownloadFileUrl(1, null)).toBe("/api/movies/1/download/file");
   });
 
   it("snake_case 영화 응답을 camelCase 화면 모델로 변환한다", async () => {
