@@ -126,6 +126,16 @@ function MovieDetail({ movie }: { movie: Movie }) {
               <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400/70">
                 비슷한 영화 추천
               </h2>
+              {movie.similarMovies.some((similar) => similar.provider === "tmdb") && (
+                <a
+                  href="https://www.themoviedb.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-medium text-zinc-500 transition-colors hover:text-amber-300"
+                >
+                  영화 정보 제공: TMDB
+                </a>
+              )}
               <div className="h-px flex-1 bg-gradient-to-r from-amber-400/20 to-transparent" />
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
