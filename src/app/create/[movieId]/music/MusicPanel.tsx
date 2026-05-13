@@ -38,6 +38,8 @@ export default function MusicPanel({ movieId, defaultTracks }: Props) {
   }, []);
 
   function handlePlay(track: MusicTrack) {
+    if (!isPlayable(track.file_url)) return;
+
     if (playingId === track.music_id) {
       audioRef.current?.pause();
       setPlayingId(null);
@@ -113,6 +115,13 @@ export default function MusicPanel({ movieId, defaultTracks }: Props) {
     return track.artist ? `${track.title} - ${track.artist}` : track.title;
   }
 
+  function providerLabel(track: MusicTrack) {
+    if (track.provider === "spotify+deezer") return "Spotify · Preview";
+    if (track.provider === "spotify") return "Spotify";
+    if (track.provider === "deezer") return "Preview";
+    return null;
+  }
+
   return (
     <div className="w-full max-w-5xl flex flex-col md:flex-row gap-6">
       {/* 음악 목록 */}
@@ -121,6 +130,7 @@ export default function MusicPanel({ movieId, defaultTracks }: Props) {
         <ul className="flex flex-col gap-2">
           {tracks.map((track) => {
             const playable = isPlayable(track.file_url);
+            const provider = providerLabel(track);
             return (
             <li
               key={track.music_id}
@@ -139,7 +149,7 @@ export default function MusicPanel({ movieId, defaultTracks }: Props) {
                     handlePlay(track);
                   }}
                   disabled={!playable}
-                  title={playable ? undefined : "재생 불가 (Spotify 연동 후 지원)"}
+                  title={playable ? "30초 미리듣기" : "미리듣기 음원이 없습니다"}
                   className={`shrink-0 w-8 h-8 rounded-full bg-[#e3b65a]/20 flex items-center justify-center text-[#e3b65a] transition-colors ${playable ? "hover:bg-[#e3b65a]/30" : "opacity-40 cursor-not-allowed"}`}
                 >
                   {playingId === track.music_id ? "⏸" : "▶"}
@@ -153,8 +163,19 @@ export default function MusicPanel({ movieId, defaultTracks }: Props) {
                 {track.is_ai_recommended && (
                   <span className="shrink-0 text-xs bg-[#e3b65a]/20 text-[#e3b65a] px-2 py-0.5 rounded-full">AI 추천</span>
                 )}
-                {track.provider === "spotify" && (
-                  <span className="shrink-0 text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">Spotify</span>
+                {provider && (
+                  <span className="shrink-0 text-xs bg-green-500/15 text-green-300 px-2 py-0.5 rounded-full">{provider}</span>
+                )}
+                {!playable && track.external_url && (
+                  <a
+                    href={track.external_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-xs text-zinc-400 underline underline-offset-2 hover:text-zinc-200"
+                  >
+                    외부에서 듣기
+                  </a>
                 )}
               </div>
               {selectedId === track.music_id && (
