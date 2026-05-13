@@ -11,7 +11,7 @@ import { getGenerationStatus, getMovie } from "@/lib/movies";
 import { APP_ROUTES } from "@/lib/routes";
 import type { GenerationStatus, Movie, SimilarMovie } from "@/types/movie";
 
-const GENERATION_POLL_INTERVAL_MS = 5000;
+const GENERATION_POLL_INTERVAL_MS = 2000;
 
 type MovieDetailState =
   | { status: "loading" }

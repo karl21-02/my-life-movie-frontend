@@ -9,6 +9,8 @@ import { getMovies } from "@/lib/movies";
 import { APP_ROUTES } from "@/lib/routes";
 import type { MovieSummary } from "@/types/movie";
 
+const MOVIES_POLL_INTERVAL_MS = 3000;
+
 type MoviesState =
   | { status: "loading" }
   | { status: "ready"; movies: MovieSummary[] }
@@ -45,7 +47,7 @@ export function MoviesClient() {
     loadMovies();
     const intervalId = window.setInterval(() => {
       loadMovies();
-    }, 5000);
+    }, MOVIES_POLL_INTERVAL_MS);
 
     return () => {
       ignore = true;
