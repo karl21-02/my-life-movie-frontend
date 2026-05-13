@@ -76,7 +76,15 @@ describe("movies API", () => {
           spotify_url: "https://open.spotify.com/track/1",
         },
       ],
-      similar_movies: [{ id: 2, title: "비슷한 영화", thumbnail: "/thumb.webp" }],
+      similar_movies: [
+        {
+          id: 2,
+          title: "비슷한 영화",
+          thumbnail: "/thumb.webp",
+          external_url: "https://www.themoviedb.org/movie/2",
+          provider: "tmdb",
+        },
+      ],
     });
     const { getMovie } = await import("@/lib/movies");
 
@@ -86,5 +94,7 @@ describe("movies API", () => {
     expect(movie.thumbnailUrl).toBe("/generated/thumbnails/video_123.webp");
     expect(movie.ost[0].spotifyUrl).toBe("https://open.spotify.com/track/1");
     expect(movie.similarMovies[0].title).toBe("비슷한 영화");
+    expect(movie.similarMovies[0].externalUrl).toBe("https://www.themoviedb.org/movie/2");
+    expect(movie.similarMovies[0].provider).toBe("tmdb");
   });
 });

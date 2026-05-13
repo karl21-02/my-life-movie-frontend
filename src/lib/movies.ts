@@ -13,6 +13,8 @@ type ApiSimilarMovie = {
   id: number;
   title: string;
   thumbnail: string;
+  external_url?: string | null;
+  provider?: string | null;
 };
 
 type ApiMovieSummary = {
@@ -113,6 +115,8 @@ function normalizeSimilarMovie(movie: ApiSimilarMovie): SimilarMovie {
     id: movie.id,
     title: movie.title,
     thumbnail: movie.thumbnail,
+    externalUrl: normalizeOptionalUrl(movie.external_url),
+    provider: movie.provider ?? undefined,
   };
 }
 

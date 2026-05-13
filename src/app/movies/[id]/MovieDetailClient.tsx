@@ -9,7 +9,7 @@ import MovieActions from "@/components/movie-actions";
 import { isUnauthenticatedError } from "@/features/auth/errors";
 import { getMovie } from "@/lib/movies";
 import { APP_ROUTES } from "@/lib/routes";
-import type { Movie } from "@/types/movie";
+import type { Movie, SimilarMovie } from "@/types/movie";
 
 type MovieDetailState =
   | { status: "loading" }
@@ -130,34 +130,70 @@ function MovieDetail({ movie }: { movie: Movie }) {
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {movie.similarMovies.map((similar) => (
-                <article
-                  key={similar.id}
-                  className="group flex flex-col overflow-hidden rounded-xl"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  <div className="relative aspect-[2/3] w-full overflow-hidden">
-                    <Image
-                      src={similar.thumbnail}
-                      alt={similar.title}
-                      fill
-                      sizes="(max-width: 640px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <p className="line-clamp-2 p-3 text-xs font-medium leading-snug text-zinc-300 transition-colors group-hover:text-amber-400">
-                    {similar.title}
-                  </p>
-                </article>
+                <SimilarMovieCard key={`${similar.provider}-${similar.id}`} movie={similar} />
               ))}
             </div>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function SimilarMovieCard({ movie }: { movie: SimilarMovie }) {
+  const content = (
+    <>
+      <div className="relative aspect-[2/3] w-full overflow-hidden">
+        {movie.thumbnail ? (
+          <Image
+            src={movie.thumbnail}
+            alt={movie.title}
+            fill
+            sizes="(max-width: 640px) 50vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-zinc-950 px-3 text-center text-xs text-zinc-500">
+            포스터 준비 중
+          </div>
+        )}
+        {movie.provider === "tmdb" && (
+          <span className="absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+            TMDB
+          </span>
+        )}
+      </div>
+      <p className="line-clamp-2 p-3 text-xs font-medium leading-snug text-zinc-300 transition-colors group-hover:text-amber-400">
+        {movie.title}
+      </p>
+    </>
+  );
+
+  const className = "group flex flex-col overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1.5";
+  const style = {
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    backdropFilter: "blur(8px)",
+  };
+
+  if (movie.externalUrl) {
+    return (
+      <a
+        href={movie.externalUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        style={style}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <article className={className} style={style}>
+      {content}
+    </article>
   );
 }
 

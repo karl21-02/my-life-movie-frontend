@@ -8,6 +8,8 @@ export type SimilarMovie = {
   id: number;
   title: string;
   thumbnail: string;
+  externalUrl?: string;
+  provider?: string;
 };
 
 export type Movie = {
