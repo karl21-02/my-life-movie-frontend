@@ -6,14 +6,20 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { logger } from "@/lib/logger";
-import { deleteMovie, downloadMovie, shareMovie } from "@/lib/movies";
+import {
+  deleteMovie,
+  downloadMovie,
+  getMovieDownloadFileUrl,
+  shareMovie,
+} from "@/lib/movies";
 import type { MovieSummary } from "@/types/movie";
 
 type Props = {
   movie: MovieSummary;
+  onDeleted?: (movieId: number) => void;
 };
 
-export default function MovieCard({ movie }: Props) {
+export default function MovieCard({ movie, onDeleted }: Props) {
   const router = useRouter();
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -54,7 +60,7 @@ export default function MovieCard({ movie }: Props) {
     try {
       const result = await downloadMovie(movie.id);
       if (result.output_url) {
-        window.location.href = result.output_url;
+        window.location.href = getMovieDownloadFileUrl(movie.id, result.download_url);
       }
       logger.info("movie_download_succeeded", { movie_id: movie.id });
       showToast("다운로드가 준비되었습니다.");
@@ -72,6 +78,7 @@ export default function MovieCard({ movie }: Props) {
       await deleteMovie(movie.id);
       logger.info("movie_delete_succeeded", { movie_id: movie.id });
       setShowConfirm(false);
+      onDeleted?.(movie.id);
       router.refresh();
     } catch {
       logger.error("movie_delete_failed", { movie_id: movie.id });

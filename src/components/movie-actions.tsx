@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { logger } from "@/lib/logger";
-import { deleteMovie, downloadMovie } from "@/lib/movies";
+import { deleteMovie, downloadMovie, getMovieDownloadFileUrl } from "@/lib/movies";
 
 type Props = {
   movieId: number;
@@ -23,7 +23,7 @@ export default function MovieActions({ movieId, movieTitle }: Props) {
     try {
       const result = await downloadMovie(movieId);
       if (result.output_url) {
-        window.location.href = result.output_url;
+        window.location.href = getMovieDownloadFileUrl(movieId, result.download_url);
       }
       logger.info("movie_download_succeeded", { movie_id: movieId });
     } catch {

@@ -9,6 +9,8 @@ import { getMovies } from "@/lib/movies";
 import { APP_ROUTES } from "@/lib/routes";
 import type { MovieSummary } from "@/types/movie";
 
+const MOVIES_POLL_INTERVAL_MS = 3000;
+
 type MoviesState =
   | { status: "loading" }
   | { status: "ready"; movies: MovieSummary[] }
@@ -21,36 +23,56 @@ export function MoviesClient() {
   useEffect(() => {
     let ignore = false;
 
-    getMovies()
-      .then((movies) => {
-        if (!ignore) {
-          setState({ status: "ready", movies });
-        }
-      })
-      .catch((error: unknown) => {
-        if (ignore) {
-          return;
-        }
+    function loadMovies() {
+      getMovies()
+        .then((movies) => {
+          if (!ignore) {
+            setState({ status: "ready", movies });
+          }
+        })
+        .catch((error: unknown) => {
+          if (ignore) {
+            return;
+          }
 
-        if (isUnauthenticatedError(error)) {
-          setState({ status: "unauthenticated" });
-          return;
-        }
+          if (isUnauthenticatedError(error)) {
+            setState({ status: "unauthenticated" });
+            return;
+          }
 
-        setState({ status: "error" });
-      });
+          setState((previous) => previous.status === "ready" ? previous : { status: "error" });
+        });
+    }
+
+    loadMovies();
+    const intervalId = window.setInterval(() => {
+      loadMovies();
+    }, MOVIES_POLL_INTERVAL_MS);
 
     return () => {
       ignore = true;
+      window.clearInterval(intervalId);
     };
   }, []);
+
+  function handleMovieDeleted(movieId: number) {
+    setState((previous) => {
+      if (previous.status !== "ready") {
+        return previous;
+      }
+      return {
+        status: "ready",
+        movies: previous.movies.filter((movie) => movie.id !== movieId),
+      };
+    });
+  }
 
   return (
     <div className="relative px-8 py-10 min-h-screen">
       <StarField />
       <MoviesHeader />
       <Divider />
-      <MoviesContent state={state} />
+      <MoviesContent state={state} onMovieDeleted={handleMovieDeleted} />
     </div>
   );
 }
@@ -87,7 +109,13 @@ function MoviesHeader() {
   );
 }
 
-function MoviesContent({ state }: { state: MoviesState }) {
+function MoviesContent({
+  state,
+  onMovieDeleted,
+}: {
+  state: MoviesState;
+  onMovieDeleted: (movieId: number) => void;
+}) {
   if (state.status === "loading") {
     return <StatePanel title="영화 목록을 불러오는 중입니다." />;
   }
@@ -126,7 +154,7 @@ function MoviesContent({ state }: { state: MoviesState }) {
   return (
     <div className="relative z-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {state.movies.map((movie) => (
-        <MovieCard key={movie.id} movie={movie} />
+        <MovieCard key={movie.id} movie={movie} onDeleted={onMovieDeleted} />
       ))}
     </div>
   );
