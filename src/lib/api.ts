@@ -458,7 +458,7 @@ export const api = {
     chat: (movieId: number, message: string) =>
       apiClient<{ ai_question: string; current_draft: string }>(
         `/api/movies/${movieId}/chat`,
-        { method: "POST", body: { message } },
+        { method: "POST", body: { message }, timeoutMs: 60_000 },
       ),
     getChatHistory: (movieId: number) =>
       apiClient<{ history: ChatMessage[] }>(`/api/movies/${movieId}/chat`),
