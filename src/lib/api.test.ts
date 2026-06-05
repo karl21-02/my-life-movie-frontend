@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiClient, type ProblemDetails } from "@/lib/api";
+import { ApiError, api, apiClient, type ProblemDetails } from "@/lib/api";
 
 describe("apiClient", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
     delete process.env.SERVER_API_BASE_URL;
     delete process.env.NEXT_PUBLIC_API_BASE_URL;
   });
@@ -363,5 +364,25 @@ describe("apiClient", () => {
         request_id: "req_network",
       }),
     });
+  });
+
+  it("finalizeStory는 영화 생성용 시나리오 확정 API를 호출한다", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ is_finalized: true }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      }),
+    );
+
+    await api.movies.finalizeStory(3);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "/api/movies/3/finalize-story",
+      expect.objectContaining({
+        method: "POST",
+      }),
+    );
   });
 });
