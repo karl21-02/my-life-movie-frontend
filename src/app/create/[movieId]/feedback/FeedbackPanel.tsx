@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { api, type SummaryResponse, type FileInfo } from "@/lib/api";
+import { ApiError, api, type SummaryResponse, type FileInfo } from "@/lib/api";
 
 type Tab = "prompt" | "image" | "video" | "document";
+type GenerateStage = "idle" | "finalizing" | "generating";
 
 const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "prompt", label: "시나리오", icon: "📝" },
@@ -41,23 +42,58 @@ interface Props {
 export default function FeedbackPanel({ movieId }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("prompt");
-  const [generating, setGenerating] = useState(false);
+  const [generateStage, setGenerateStage] = useState<GenerateStage>("idle");
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
+  const [summaryError, setSummaryError] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  async function loadSummary() {
+    setSummaryError(false);
+    setSummary(null);
+    try {
+      setSummary(await api.movies.getSummary(movieId));
+    } catch {
+      setSummaryError(true);
+    }
+  }
 
   useEffect(() => {
-    api.movies.getSummary(movieId).then(setSummary).catch(() => {});
+    let ignore = false;
+    api.movies.getSummary(movieId)
+      .then((nextSummary) => {
+        if (ignore) return;
+        setSummary(nextSummary);
+        setSummaryError(false);
+      })
+      .catch(() => {
+        if (ignore) return;
+        setSummaryError(true);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, [movieId]);
 
   const filesByType = (type: string) => (summary?.files ?? []).filter((f) => f.type === type);
 
   async function handleGenerate() {
-    setGenerating(true);
+    if (generateStage !== "idle" || !summary) return;
+
+    setGenerateError(null);
     try {
+      let latestSummary = summary;
+      if (!latestSummary.is_finalized) {
+        setGenerateStage("finalizing");
+        latestSummary = await api.movies.finalizeStory(movieId);
+        setSummary(latestSummary);
+      }
+      setGenerateStage("generating");
       await api.movies.generate(movieId);
       router.push(`/movies/${movieId}`);
-    } catch {
-      alert("영화 생성 요청 중 오류가 발생했습니다. 다시 시도해주세요.");
-      setGenerating(false);
+    } catch (error) {
+      setGenerateError(getGenerateErrorMessage(error));
+      setGenerateStage("idle");
     }
   }
 
@@ -90,6 +126,21 @@ export default function FeedbackPanel({ movieId }: Props) {
     const count = filesByType(type).length;
     return count > 0 ? count : null;
   };
+
+  if (summaryError) {
+    return (
+      <div className="w-full max-w-3xl flex flex-col items-center justify-center gap-4 py-24">
+        <p className="text-zinc-400 text-sm">요약 정보를 불러오지 못했습니다.</p>
+        <button
+          type="button"
+          onClick={loadSummary}
+          className="rounded-xl bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-700"
+        >
+          다시 시도
+        </button>
+      </div>
+    );
+  }
 
   if (!summary) {
     return (
@@ -152,12 +203,16 @@ export default function FeedbackPanel({ movieId }: Props) {
 
           {/* 생성 버튼 */}
           <div className="mt-auto p-3">
+            {generateError && (
+              <p className="mb-2 text-xs leading-relaxed text-red-300">{generateError}</p>
+            )}
             <button
+              type="button"
               onClick={handleGenerate}
-              disabled={generating}
+              disabled={generateStage !== "idle"}
               className="w-full py-3 rounded-xl bg-[#e3b65a] text-zinc-900 text-sm font-bold hover:bg-[#e3b65a]/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {generating ? "생성 중..." : "🎬 생성"}
+              {getGenerateButtonText(generateStage)}
             </button>
           </div>
         </div>
@@ -167,4 +222,24 @@ export default function FeedbackPanel({ movieId }: Props) {
       </div>
     </div>
   );
+}
+
+function getGenerateButtonText(stage: GenerateStage): string {
+  if (stage === "finalizing") {
+    return "이야기 정리 중...";
+  }
+  if (stage === "generating") {
+    return "생성 요청 중...";
+  }
+  return "🎬 생성";
+}
+
+function getGenerateErrorMessage(error: unknown): string {
+  if (
+    error instanceof ApiError &&
+    error.problem.code === "GENERATION_INPUT_NOT_READY"
+  ) {
+    return "영화 생성을 위한 이야기가 아직 준비되지 않았습니다. 내용을 조금 더 입력한 뒤 다시 시도해주세요.";
+  }
+  return "영화 생성 요청 중 오류가 발생했습니다. 다시 시도해주세요.";
 }

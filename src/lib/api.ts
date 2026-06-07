@@ -417,6 +417,10 @@ export interface SummaryResponse {
   files: FileInfo[];
   theme: { theme_id: number };
   music: { music_id: number } | null;
+  story_brief?: Record<string, unknown> | null;
+  scene_plan?: Record<string, unknown>[];
+  generation_prompt?: string | null;
+  is_finalized: boolean;
 }
 
 // --- 기능별 API ---
@@ -464,6 +468,11 @@ export const api = {
       apiClient<{ history: ChatMessage[] }>(`/api/movies/${movieId}/chat`),
     getSummary: (movieId: number) =>
       apiClient<SummaryResponse>(`/api/movies/${movieId}/summary`),
+    finalizeStory: (movieId: number) =>
+      apiClient<SummaryResponse>(`/api/movies/${movieId}/finalize-story`, {
+        method: "POST",
+        timeoutMs: 60_000,
+      }),
     generate: (movieId: number) =>
       apiClient(`/api/movies/${movieId}/generate`, { method: "POST" }),
   },

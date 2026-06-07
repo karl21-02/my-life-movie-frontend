@@ -32,7 +32,9 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
   const [consentChecked, setConsentChecked] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const QUICK_ACTIONS = [
     "이야기 만들어주기",
@@ -61,6 +63,18 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
     } finally {
       setChatLoading(false);
     }
+  }
+
+  function scrollToLatest() {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setShowScrollButton(false);
+  }
+
+  function handleChatScroll() {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollButton(distanceFromBottom > 96);
   }
 
   const uploadFile = useCallback(async (file: File) => {
@@ -98,7 +112,10 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
 
   useEffect(() => {
     api.movies.getChatHistory(movieId).then((res) => {
-      if (res.history.length > 0) setMessages(res.history);
+      if (res.history.length > 0) {
+        setMessages(res.history);
+        setTimeout(scrollToLatest, 50);
+      }
     }).catch(() => {});
   }, [movieId]);
 
@@ -193,7 +210,12 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
 
       {/* 우측: AI 채팅 */}
       <section className="flex-1 bg-zinc-900 rounded-2xl p-6 flex flex-col gap-4 min-h-120">
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto">
+        <div className="relative flex-1 min-h-80">
+          <div
+            ref={chatScrollRef}
+            onScroll={handleChatScroll}
+            className="absolute inset-0 flex flex-col gap-3 overflow-y-auto pr-1"
+          >
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center text-center text-zinc-500 gap-2">
               <span className="text-4xl">🎬</span>
@@ -225,6 +247,19 @@ export default function InputPanel({ movieId, initialHistory }: Props) {
             </div>
           )}
           <div ref={chatEndRef} />
+          </div>
+
+          {showScrollButton && (
+            <button
+              type="button"
+              onClick={scrollToLatest}
+              aria-label="최신 메시지로 이동"
+              title="최신 메시지로 이동"
+              className="absolute bottom-3 right-3 h-9 w-9 rounded-full border border-[#e3b65a]/40 bg-zinc-950/90 text-[#e3b65a] shadow-lg shadow-black/30 backdrop-blur hover:bg-zinc-800 transition-colors"
+            >
+              ↓
+            </button>
+          )}
         </div>
 
         {/* 빠른 액션 칩 */}
