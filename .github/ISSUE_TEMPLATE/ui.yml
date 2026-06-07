@@ -1,0 +1,48 @@
+name: "UI/UX"
+description: "화면, 레이아웃, 반응형, 사용자 경험 개선 작업을 등록합니다."
+labels: ["🎨 ui", "💻 frontend"]
+body:
+  - type: input
+    id: screen
+    attributes:
+      label: 대상 화면
+      description: 영향을 받는 페이지나 컴포넌트를 적어주세요.
+      placeholder: "예: 업로드 화면, 결과 화면, 공통 레이아웃"
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: 변경 설명
+      description: 어떤 UI/UX 변경이 필요한지 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 현재 문제
+      description: 현재 화면의 문제나 개선 필요성을 적어주세요.
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대 결과
+      description: 변경 후 사용자가 보게 될 상태를 적어주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 자료
+      description: 스크린샷, 와이어프레임, 디자인 링크가 있다면 첨부해주세요.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 확인 항목
+      options:
+        - label: 모바일 화면을 고려했습니다.
+        - label: 데스크톱 화면을 고려했습니다.
+        - label: 로딩, 에러, 빈 상태가 필요한지 확인했습니다.
